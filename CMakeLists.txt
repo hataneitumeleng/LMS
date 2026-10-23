@@ -17,11 +17,19 @@ else()
     set(LMS_SQLITE_TARGET SQLite::SQLite3)
 endif()
 
+# ---- Copy sql/schema.sql into the program as a C++ string ----
+file(READ ${CMAKE_SOURCE_DIR}/sql/schema.sql LMS_SCHEMA_SQL)
+configure_file(src/data/Schema.cpp.in ${CMAKE_BINARY_DIR}/generated/Schema.cpp @ONLY)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS sql/schema.sql)
+
 # ---- lms_core: domain + services + data layers ----
 # Everything except the console menus goes into one library,
 # so the GoogleTest tests (Phase 5) can link the same code.
 add_library(lms_core STATIC
     src/domain/SubmissionStatus.cpp
+    src/data/Statement.cpp
+    src/data/Database.cpp
+    ${CMAKE_BINARY_DIR}/generated/Schema.cpp
 )
 target_include_directories(lms_core PUBLIC src)
 target_link_libraries(lms_core PUBLIC ${LMS_SQLITE_TARGET} PkgConfig::SODIUM)
