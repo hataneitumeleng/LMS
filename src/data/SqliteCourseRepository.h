@@ -19,6 +19,7 @@ public:
     bool isLecturerOf(int courseId, int lecturerId) override;
     void addEnrolment(int courseId, int studentId) override;
     void removeEnrolment(int courseId, int studentId) override;
+    bool isEnrolled(int courseId, int studentId) override;
     std::vector<Course> coursesForStudent(int studentId) override;
 
 private:

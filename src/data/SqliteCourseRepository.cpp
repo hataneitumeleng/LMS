@@ -84,6 +84,13 @@ void SqliteCourseRepository::removeEnrolment(int courseId, int studentId) {
     stmt.step();
 }
 
+bool SqliteCourseRepository::isEnrolled(int courseId, int studentId) {
+    Statement stmt =
+        db_.prepare("SELECT 1 FROM enrolment WHERE course_id = ? AND student_id = ?");
+    stmt.bind(1, courseId).bind(2, studentId);
+    return stmt.step();
+}
+
 std::vector<Course> SqliteCourseRepository::coursesForStudent(int studentId) {
     Statement stmt = db_.prepare(
         "SELECT c.id, c.code, c.title, c.department_id FROM course c "

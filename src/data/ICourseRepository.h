@@ -22,6 +22,7 @@ public:
     virtual bool isLecturerOf(int courseId, int lecturerId) = 0;
     virtual void addEnrolment(int courseId, int studentId) = 0;
     virtual void removeEnrolment(int courseId, int studentId) = 0;
+    virtual bool isEnrolled(int courseId, int studentId) = 0;
     virtual std::vector<Course> coursesForStudent(int studentId) = 0;
 };
 
