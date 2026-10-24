@@ -1,5 +1,6 @@
 #include "services/AssignmentService.h"
 
+#include "data/Transaction.h"
 #include "domain/Errors.h"
 
 #include <chrono>
@@ -14,10 +15,17 @@ bool isBlank(const std::string& value) {
 }
 }  // namespace
 
-AssignmentService::AssignmentService(IAssignmentRepository& assignments,
+AssignmentService::AssignmentService(Database& db, IAssignmentRepository& assignments,
                                      ICourseRepository& courses, IUserRepository& users,
-                                     const IClock& clock)
-    : assignments_(assignments), courses_(courses), users_(users), clock_(clock) {}
+                                     ISubmissionRepository& submissions,
+                                     const IPenaltyPolicy& policy, const IClock& clock)
+    : db_(db),
+      assignments_(assignments),
+      courses_(courses),
+      users_(users),
+      submissions_(submissions),
+      policy_(policy),
+      clock_(clock) {}
 
 int AssignmentService::createAssignment(int lecturerId, int courseId, const std::string& title,
                                         TimePoint deadline, int maxMark,
@@ -57,8 +65,23 @@ void AssignmentService::grantExtension(int lecturerId, int assignmentId, int stu
     }
     if (isBlank(reason)) throw ValidationError("A reason is required");
 
+    // BR-03: an extension can only be granted until the work is marked
+    std::optional<Submission> submission = submissions_.findCurrent(studentId, assignmentId);
+    if (submission && !submission->isOpen()) {
+        throw ValidationError("This student's work has already been marked");
+    }
+
+    Transaction tx(db_);
     assignments_.saveExtension(
         Extension{assignmentId, studentId, newDeadline, reason, lecturerId, clock_.now()});
+    if (submission) {
+        // BR-04: work out days late again against the new deadline
+        // (a Late submission can go back to Submitted)
+        const TimePoint submittedAt = submissions_.latestVersion(submission->id)->submittedAt;
+        submission->setLateness(policy_.daysLate(submittedAt, newDeadline));
+        submissions_.save(*submission);
+    }
+    tx.commit();
 }
 
 void AssignmentService::requireLecturerOf(int lecturerId, int courseId) {
