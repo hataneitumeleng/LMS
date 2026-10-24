@@ -49,7 +49,7 @@ double MarkingService::amend(int lecturerId, int submissionId, double rawMark,
     if (submission.status != SubmissionStatus::Marked) {
         throw ValidationError(submission.isOpen()
                                   ? "This work is not marked yet"
-                                  : "This mark has been moderated and can only be changed by the HoD");
+                                  : "This mark has been moderated; only the HoD can change it");
     }
     // FR-18: a lecturer amends only their own mark
     if (submission.markedBy != lecturerId) {

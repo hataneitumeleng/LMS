@@ -3,7 +3,7 @@
 This project follows a small subset of the C++ Core Guidelines (Stroustrup and Sutter), adapted to the Week 3 design.
 
 ## 1. Files and layout
-- One class per header (`.h`) and source (`.cpp`) file, named after the class: `SubmissionService.h` and `SubmissionService.cpp`.
+- One class per header (`.h`) and source (`.cpp`) file, named after the class: `SubmissionService.h` and `SubmissionService.cpp`. Small helper types used by only one class may share its file (for example `StudentAssignmentRow` in `SubmissionService.h`, and the two admin sub-menus in `AdminMenu.h`).
 - Folders follow the layers in Figure 1:
   - `src/ui` holds the menus;
   - `src/services` holds the business logic;
@@ -26,7 +26,8 @@ Class, method and table names must match the Week 3 class diagrams and ERD exact
 
 ## 3. Formatting
 - 4 spaces, no tabs. Lines of 100 characters or fewer.
-- The opening brace goes on the same line. Always use braces, even for one-line `if` bodies.
+- The opening brace goes on the same line.
+- Use braces for every `if` body that is on its own line. A short guard that fits on the same line as its `if` may leave them out, for example `if (!user) return nullptr;`.
 
 ## 4. Safety rules
 - **SQL:** every query uses a prepared statement with `sqlite3_bind_*`. User input is never added to an SQL string (security, FR-01).
@@ -43,4 +44,5 @@ Class, method and table names must match the Week 3 class diagrams and ERD exact
 
 ## 6. Git
 - Small commits with a clear message in the imperative, for example "Add SubmissionStatus enum".
-- `main` always builds. New work goes on a feature branch and is merged by pull request (the full branching strategy comes in Phase 6).
+- `main` always builds. GitHub Actions (`.github/workflows/build.yml`) builds and tests every push on Ubuntu and Windows.
+- During Phase 4 there was one developer, so each finished step was committed straight to `main` once it built and ran. From Phase 6, new work goes on a feature branch and is merged by pull request (the full branching strategy comes in Phase 6).

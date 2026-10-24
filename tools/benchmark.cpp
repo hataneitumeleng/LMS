@@ -101,8 +101,8 @@ int main() {
 
             std::vector<int> courseIds;
             for (int c = 1; c <= kCourses; ++c) {
-                const int id = courses.saveCourse(
-                    lms::Course{0, "C" + std::to_string(c), "Course " + std::to_string(c), department});
+                const int id = courses.saveCourse(lms::Course{
+                    0, "C" + std::to_string(c), "Course " + std::to_string(c), department});
                 courses.addLecturer(id, lecturerId);
                 courseIds.push_back(id);
                 for (int a = 1; a <= kAssignmentsPerCourse; ++a) {
