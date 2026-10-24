@@ -5,7 +5,9 @@
 #include "domain/UserFactory.h"
 #include "services/IPasswordHasher.h"
 
+#include <memory>
 #include <string>
+#include <vector>
 
 namespace lms {
 
@@ -36,6 +38,11 @@ public:
     void assignLecturer(int courseId, int lecturerId);  // FR-05
     void enrol(int courseId, int studentId);            // FR-06
     void unenrol(int courseId, int studentId);          // FR-06
+
+    // Read-only lists for the administrator menu (the menus never use a repository).
+    std::vector<std::unique_ptr<User>> listUsers();
+    std::vector<Department> listDepartments();
+    std::vector<Course> listCourses();
 
 private:
     std::unique_ptr<User> requireUser(int userId, Role expectedRole);

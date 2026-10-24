@@ -106,6 +106,10 @@ std::vector<StudentAssignmentRow> SubmissionService::listForStudent(int studentI
     return rows;
 }
 
+int SubmissionService::removeOrphanFiles() {
+    return store_.removeOrphans(submissions_.allFilePaths());
+}
+
 std::string SubmissionService::statusForStudent(const std::optional<Submission>& submission,
                                                 int maxMark) {
     if (!submission) return "Not submitted";

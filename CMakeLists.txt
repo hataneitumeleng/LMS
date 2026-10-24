@@ -62,5 +62,18 @@ else()
 endif()
 
 # ---- lms: the console program (presentation layer) ----
-add_executable(lms src/main.cpp)
+add_executable(lms
+    src/main.cpp
+    src/ui/Console.cpp
+    src/ui/Menu.cpp
+    src/ui/LoginMenu.cpp
+    src/ui/StudentMenu.cpp
+    src/ui/LecturerMenu.cpp
+    src/ui/HodMenu.cpp
+    src/ui/AdminMenu.cpp
+    src/ui/App.cpp
+)
 target_link_libraries(lms PRIVATE lms_core)
+if(NOT MSVC)
+    target_compile_options(lms PRIVATE -Wall -Wextra -Wpedantic)
+endif()

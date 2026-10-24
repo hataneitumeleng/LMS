@@ -36,6 +36,9 @@ public:
 
     std::vector<StudentAssignmentRow> listForStudent(int studentId);
 
+    // Called at start-up: deletes stored files the database doesn't know about.
+    int removeOrphanFiles();
+
 private:
     Submission firstSubmission(int studentId, const Assignment& assignment, TimePoint now,
                                TimePoint deadline, const std::string& path);

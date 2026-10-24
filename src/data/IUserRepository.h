@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace lms {
 
@@ -15,6 +16,7 @@ public:
     virtual std::unique_ptr<User> findByUsername(const std::string& username) = 0;
     virtual std::unique_ptr<User> findById(int id) = 0;
     virtual std::unique_ptr<User> findActiveHod(int departmentId) = 0;
+    virtual std::vector<std::unique_ptr<User>> findAll() = 0;
     // Inserts a new user (id 0) or updates an existing one. Returns the id.
     virtual int save(const User& user) = 0;
 };

@@ -12,6 +12,14 @@
 
 namespace lms {
 
+// One assignment in the HoD's department, with how much is still to be moderated.
+struct DepartmentAssignment {
+    std::string courseCode;
+    Assignment assignment;
+    int submissions = 0;
+    int notModerated = 0;
+};
+
 // HoD moderation and release (UC-12, UC-13; FR-14, FR-15, BR-08), Figure 7.
 // Every method checks that the assignment belongs to the HoD's own department.
 class ModerationService {
@@ -19,6 +27,9 @@ public:
     ModerationService(Database& db, ISubmissionRepository& submissions,
                       IAssignmentRepository& assignments, ICourseRepository& courses,
                       IUserRepository& users, AuditService& audit, const IClock& clock);
+
+    // Every assignment of every course in the HoD's department.
+    std::vector<DepartmentAssignment> assignmentsInDepartment(int hodId);
 
     // The marked work of one assignment (Marked, Moderated or Released).
     std::vector<Submission> listForModeration(int hodId, int assignmentId);
@@ -35,6 +46,7 @@ public:
     int release(int hodId, int assignmentId);
 
 private:
+    int requireHodDepartment(int hodId);
     Assignment requireAssignmentInDepartment(int hodId, int assignmentId);
 
     Database& db_;

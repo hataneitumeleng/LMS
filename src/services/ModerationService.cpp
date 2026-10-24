@@ -17,6 +17,20 @@ ModerationService::ModerationService(Database& db, ISubmissionRepository& submis
       audit_(audit),
       clock_(clock) {}
 
+std::vector<DepartmentAssignment> ModerationService::assignmentsInDepartment(int hodId) {
+    const int departmentId = requireHodDepartment(hodId);
+    std::vector<DepartmentAssignment> rows;
+    for (const Course& course : courses_.allCourses()) {
+        if (course.departmentId != departmentId) continue;
+        for (const Assignment& a : assignments_.forCourse(course.id)) {
+            rows.push_back(DepartmentAssignment{
+                course.code, a, static_cast<int>(submissions_.findByAssignment(a.id).size()),
+                submissions_.countNotModerated(a.id)});
+        }
+    }
+    return rows;
+}
+
 std::vector<Submission> ModerationService::listForModeration(int hodId, int assignmentId) {
     requireAssignmentInDepartment(hodId, assignmentId);
     std::vector<Submission> marked;
@@ -86,16 +100,22 @@ int ModerationService::release(int hodId, int assignmentId) {
     return released;
 }
 
+int ModerationService::requireHodDepartment(int hodId) {
+    std::unique_ptr<User> hod = users_.findById(hodId);
+    if (!hod || !hod->active() || hod->role() != Role::HoD) {
+        throw AuthError("Only an active HoD can do this");
+    }
+    return *hod->departmentId();
+}
+
 Assignment ModerationService::requireAssignmentInDepartment(int hodId, int assignmentId) {
     std::optional<Assignment> assignment = assignments_.find(assignmentId);
     if (!assignment) {
         throw ValidationError("No assignment with id " + std::to_string(assignmentId));
     }
-    std::unique_ptr<User> hod = users_.findById(hodId);
     const std::optional<Course> course = courses_.findCourse(assignment->courseId);
     // FR-02, BR-08: only the active HoD of the course's own department
-    if (!hod || !hod->active() || hod->role() != Role::HoD ||
-        hod->departmentId() != course->departmentId) {
+    if (requireHodDepartment(hodId) != course->departmentId) {
         throw AuthError("Only the HoD of this course's department can do this");
     }
     return *assignment;

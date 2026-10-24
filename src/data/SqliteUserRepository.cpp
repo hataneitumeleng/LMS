@@ -31,6 +31,13 @@ std::unique_ptr<User> SqliteUserRepository::findActiveHod(int departmentId) {
     return stmt.step() ? readUser(stmt) : nullptr;
 }
 
+std::vector<std::unique_ptr<User>> SqliteUserRepository::findAll() {
+    Statement stmt = db_.prepare(std::string(kUserColumns) + "ORDER BY role, username");
+    std::vector<std::unique_ptr<User>> users;
+    while (stmt.step()) users.push_back(readUser(stmt));
+    return users;
+}
+
 int SqliteUserRepository::save(const User& user) {
     const bool isNew = user.id() == 0;
     Statement stmt = db_.prepare(

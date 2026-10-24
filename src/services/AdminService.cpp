@@ -155,4 +155,10 @@ void AdminService::makeHod(const User& lecturer, int departmentId) {
     users_.save(*hod);
 }
 
+std::vector<std::unique_ptr<User>> AdminService::listUsers() { return users_.findAll(); }
+
+std::vector<Department> AdminService::listDepartments() { return courses_.allDepartments(); }
+
+std::vector<Course> AdminService::listCourses() { return courses_.allCourses(); }
+
 }  // namespace lms

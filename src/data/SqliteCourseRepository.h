@@ -13,6 +13,7 @@ public:
     int saveCourse(const Course& course) override;
     std::optional<Department> findDepartment(int id) override;
     std::optional<Course> findCourse(int id) override;
+    std::vector<Department> allDepartments() override;
     std::vector<Course> allCourses() override;
 
     void addLecturer(int courseId, int lecturerId) override;
@@ -21,6 +22,7 @@ public:
     void removeEnrolment(int courseId, int studentId) override;
     bool isEnrolled(int courseId, int studentId) override;
     std::vector<Course> coursesForStudent(int studentId) override;
+    std::vector<Course> coursesForLecturer(int lecturerId) override;
 
 private:
     static Course readCourse(const Statement& row);

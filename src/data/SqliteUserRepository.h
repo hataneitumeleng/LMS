@@ -13,6 +13,7 @@ public:
     std::unique_ptr<User> findByUsername(const std::string& username) override;
     std::unique_ptr<User> findById(int id) override;
     std::unique_ptr<User> findActiveHod(int departmentId) override;
+    std::vector<std::unique_ptr<User>> findAll() override;
     int save(const User& user) override;
 
 private:

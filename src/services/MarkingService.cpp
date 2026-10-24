@@ -26,7 +26,7 @@ std::vector<Submission> MarkingService::listForMarking(int lecturerId, int assig
     return submissions_.findByAssignment(assignmentId);
 }
 
-void MarkingService::mark(int lecturerId, int submissionId, double rawMark,
+double MarkingService::mark(int lecturerId, int submissionId, double rawMark,
                           const std::string& feedback) {
     Submission submission = requireSubmission(submissionId);
     const Assignment assignment = requireAssignmentTaughtBy(lecturerId, submission.assignmentId);
@@ -39,9 +39,10 @@ void MarkingService::mark(int lecturerId, int submissionId, double rawMark,
     const double finalMark = policy_.finalMark(rawMark, assignment.maxMark, submission.daysLate);
     submission.recordMark(rawMark, finalMark, feedback, lecturerId);
     save(submission, std::nullopt, lecturerId, "First mark");
+    return finalMark;
 }
 
-void MarkingService::amend(int lecturerId, int submissionId, double rawMark,
+double MarkingService::amend(int lecturerId, int submissionId, double rawMark,
                            const std::string& feedback, const std::string& reason) {
     Submission submission = requireSubmission(submissionId);
     const Assignment assignment = requireAssignmentTaughtBy(lecturerId, submission.assignmentId);
@@ -61,6 +62,7 @@ void MarkingService::amend(int lecturerId, int submissionId, double rawMark,
     const double finalMark = policy_.finalMark(rawMark, assignment.maxMark, submission.daysLate);
     submission.recordMark(rawMark, finalMark, feedback, lecturerId);
     save(submission, oldFinal, lecturerId, reason);
+    return finalMark;
 }
 
 Submission MarkingService::requireSubmission(int submissionId) {

@@ -23,10 +23,12 @@ public:
     std::vector<Submission> listForMarking(int lecturerId, int assignmentId);
 
     // FR-12, FR-13. Raw mark 0 to max, feedback required; the penalty is applied.
-    void mark(int lecturerId, int submissionId, double rawMark, const std::string& feedback);
+    // Returns the final mark.
+    double mark(int lecturerId, int submissionId, double rawMark, const std::string& feedback);
 
     // FR-18. Only the lecturer who marked it, only before moderation, with a reason.
-    void amend(int lecturerId, int submissionId, double rawMark, const std::string& feedback,
+    // Returns the new final mark.
+    double amend(int lecturerId, int submissionId, double rawMark, const std::string& feedback,
                const std::string& reason);
 
 private:

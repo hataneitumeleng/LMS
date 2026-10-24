@@ -8,6 +8,7 @@
 #include "services/IPenaltyPolicy.h"
 
 #include <string>
+#include <vector>
 
 namespace lms {
 
@@ -30,6 +31,10 @@ public:
     // worked out again against the new deadline (BR-04).
     void grantExtension(int lecturerId, int assignmentId, int studentId, TimePoint newDeadline,
                         const std::string& reason);
+
+    // Read-only lists for the lecturer menu.
+    std::vector<Course> coursesTaughtBy(int lecturerId);
+    std::vector<Assignment> assignmentsFor(int lecturerId, int courseId);
 
 private:
     void requireLecturerOf(int lecturerId, int courseId);

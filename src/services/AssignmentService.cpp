@@ -84,6 +84,15 @@ void AssignmentService::grantExtension(int lecturerId, int assignmentId, int stu
     tx.commit();
 }
 
+std::vector<Course> AssignmentService::coursesTaughtBy(int lecturerId) {
+    return courses_.coursesForLecturer(lecturerId);
+}
+
+std::vector<Assignment> AssignmentService::assignmentsFor(int lecturerId, int courseId) {
+    requireLecturerOf(lecturerId, courseId);
+    return assignments_.forCourse(courseId);
+}
+
 void AssignmentService::requireLecturerOf(int lecturerId, int courseId) {
     std::unique_ptr<User> lecturer = users_.findById(lecturerId);
     // FR-02: only an active lecturer of this course may do this

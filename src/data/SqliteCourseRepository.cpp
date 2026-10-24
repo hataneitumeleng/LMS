@@ -47,6 +47,13 @@ std::optional<Course> SqliteCourseRepository::findCourse(int id) {
     return readCourse(stmt);
 }
 
+std::vector<Department> SqliteCourseRepository::allDepartments() {
+    Statement stmt = db_.prepare("SELECT id, name FROM department ORDER BY name");
+    std::vector<Department> departments;
+    while (stmt.step()) departments.push_back(Department{stmt.columnInt(0), stmt.columnText(1)});
+    return departments;
+}
+
 std::vector<Course> SqliteCourseRepository::allCourses() {
     Statement stmt =
         db_.prepare("SELECT id, code, title, department_id FROM course ORDER BY code");
@@ -96,6 +103,16 @@ std::vector<Course> SqliteCourseRepository::coursesForStudent(int studentId) {
         "SELECT c.id, c.code, c.title, c.department_id FROM course c "
         "JOIN enrolment e ON e.course_id = c.id WHERE e.student_id = ? ORDER BY c.code");
     stmt.bind(1, studentId);
+    std::vector<Course> courses;
+    while (stmt.step()) courses.push_back(readCourse(stmt));
+    return courses;
+}
+
+std::vector<Course> SqliteCourseRepository::coursesForLecturer(int lecturerId) {
+    Statement stmt = db_.prepare(
+        "SELECT c.id, c.code, c.title, c.department_id FROM course c "
+        "JOIN course_lecturer cl ON cl.course_id = c.id WHERE cl.lecturer_id = ? ORDER BY c.code");
+    stmt.bind(1, lecturerId);
     std::vector<Course> courses;
     while (stmt.step()) courses.push_back(readCourse(stmt));
     return courses;

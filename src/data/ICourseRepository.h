@@ -16,6 +16,7 @@ public:
     virtual int saveCourse(const Course& course) = 0;
     virtual std::optional<Department> findDepartment(int id) = 0;
     virtual std::optional<Course> findCourse(int id) = 0;
+    virtual std::vector<Department> allDepartments() = 0;
     virtual std::vector<Course> allCourses() = 0;
 
     virtual void addLecturer(int courseId, int lecturerId) = 0;
@@ -24,6 +25,7 @@ public:
     virtual void removeEnrolment(int courseId, int studentId) = 0;
     virtual bool isEnrolled(int courseId, int studentId) = 0;
     virtual std::vector<Course> coursesForStudent(int studentId) = 0;
+    virtual std::vector<Course> coursesForLecturer(int lecturerId) = 0;
 };
 
 }  // namespace lms
