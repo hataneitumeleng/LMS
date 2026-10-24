@@ -77,3 +77,7 @@ target_link_libraries(lms PRIVATE lms_core)
 if(NOT MSVC)
     target_compile_options(lms PRIVATE -Wall -Wextra -Wpedantic)
 endif()
+
+# ---- lms_benchmark: R12 timing test (NFR-01, NFR-02) ----
+add_executable(lms_benchmark tools/benchmark.cpp)
+target_link_libraries(lms_benchmark PRIVATE lms_core)

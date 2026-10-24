@@ -25,7 +25,7 @@ TimePoint timeFromText(const std::string& text) {
     std::tm local{};
     std::istringstream in(text);
     in >> std::get_time(&local, "%Y-%m-%d %H:%M:%S");
-    if (in.fail()) {
+    if (in.fail() || !(in >> std::ws).eof()) {  // also refuses extra text after the time
         throw ValidationError("Date and time must look like 2026-11-30 23:59:00");
     }
     local.tm_isdst = -1;  // let the system decide about daylight saving
@@ -33,7 +33,13 @@ TimePoint timeFromText(const std::string& text) {
     if (t == -1) {
         throw ValidationError("Invalid date and time: " + text);
     }
-    return std::chrono::system_clock::from_time_t(t);
+    const TimePoint result = std::chrono::system_clock::from_time_t(t);
+    // mktime quietly turns 31 February into 3 March, so convert back and compare
+    // to refuse dates that don't exist.
+    if (toText(result) != text) {
+        throw ValidationError("This date does not exist: " + text);
+    }
+    return result;
 }
 
 }  // namespace lms
