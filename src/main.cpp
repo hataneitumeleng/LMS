@@ -1,33 +1,24 @@
 #include "data/Database.h"
 #include "data/DatabaseError.h"
+#include "data/SqliteCourseRepository.h"
 #include "data/SqliteUserRepository.h"
 #include "domain/Errors.h"
 #include "domain/UserFactory.h"
+#include "services/AdminService.h"
 #include "services/Argon2Hasher.h"
-#include "services/AuthService.h"
 
+#include <functional>
 #include <iostream>
-#include <vector>
 
 namespace {
 
-// A clock we can move forward, to show the 5-minute lockout without waiting.
-class DemoClock : public lms::IClock {
-public:
-    lms::TimePoint now() const override { return now_; }
-    void advanceMinutes(int minutes) { now_ += std::chrono::minutes(minutes); }
-
-private:
-    lms::TimePoint now_ = std::chrono::system_clock::now();
-};
-
-void tryLogin(lms::AuthService& auth, const std::string& username, const std::string& password) {
+// Runs one admin action and prints the error message if a rule refuses it.
+void attempt(const std::string& description, const std::function<void()>& action) {
     try {
-        auto user = auth.login(username, password);
-        std::cout << "  Login OK: " << user->fullName() << " (" << lms::toString(user->role())
-                  << ")\n";
-    } catch (const lms::AuthError& e) {
-        std::cout << "  Login refused: " << e.what() << "\n";
+        action();
+        std::cout << "  OK:      " << description << "\n";
+    } catch (const lms::ValidationError& e) {
+        std::cout << "  Refused: " << description << " -> " << e.what() << "\n";
     }
 }
 
@@ -35,63 +26,63 @@ void tryLogin(lms::AuthService& auth, const std::string& username, const std::st
 
 int main() {
     try {
-        // Step 4 demo uses an in-memory database, so nothing is saved to lms.db.
+        // Step 5a demo on an in-memory database, so nothing is saved to lms.db.
         lms::Database db(":memory:");
         db.initialiseSchema();
-        db.prepare("INSERT INTO department (name) VALUES ('Science')").step();
-
         lms::UserFactory factory;
         lms::SqliteUserRepository users(db, factory);
+        lms::SqliteCourseRepository courses(db);
         lms::Argon2Hasher hasher;
-        DemoClock clock;
-        lms::AuthService auth(users, hasher, clock);
+        lms::AdminService admin(db, users, courses, factory, hasher);
 
-        std::cout << "1. Users created by UserFactory and saved by SqliteUserRepository:\n";
-        std::vector<std::unique_ptr<lms::User>> people;
-        people.push_back(factory.create(lms::Role::Administrator, "admin", "Thabo Admin", {}));
-        people.push_back(factory.create(lms::Role::Lecturer, "lect1", "Mpho Lecturer", {}));
-        people.push_back(factory.create(lms::Role::HoD, "hod1", "Lerato HoD", 1));
-        people.push_back(factory.create(lms::Role::Student, "stu1", "Itumeleng Student", {}));
-        for (auto& person : people) {
-            person->setPasswordHash(hasher.hash("Password1"));
-            person->setId(users.save(*person));
-            // Polymorphism: role() runs the version of the real subclass.
-            std::cout << "  " << person->username() << " -> " << lms::toString(person->role())
-                      << "\n";
-        }
+        std::cout << "1. Create users (FR-03):\n";
+        int lect1 = 0, lect2 = 0, stu1 = 0;
+        attempt("lecturer mpho", [&] {
+            lect1 = admin.createUser(lms::Role::Lecturer, "mpho", "Mpho Lecturer", "Password1");
+        });
+        attempt("lecturer lerato", [&] {
+            lect2 = admin.createUser(lms::Role::Lecturer, "lerato", "Lerato Lecturer", "Password1");
+        });
+        attempt("student itu", [&] {
+            stu1 = admin.createUser(lms::Role::Student, "itu", "Itumeleng Student", "Password1");
+        });
+        attempt("second user called itu", [&] {
+            admin.createUser(lms::Role::Student, "itu", "Someone Else", "Password1");
+        });
+        attempt("student with a short password", [&] {
+            admin.createUser(lms::Role::Student, "neo", "Neo Student", "abc");
+        });
 
-        std::cout << "2. Password stored in the database (Argon2id, not plain text):\n  "
-                  << users.findByUsername("stu1")->passwordHash().substr(0, 40) << "...\n";
+        std::cout << "2. Departments and HoDs (FR-04, Section 5.2):\n";
+        int science = 0;
+        attempt("create Science with mpho as HoD", [&] {
+            science = admin.createDepartment("Science", lect1);
+        });
+        std::cout << "           Science HoD is now: " << users.findActiveHod(science)->username()
+                  << " (" << lms::toString(users.findById(lect1)->role()) << ")\n";
+        attempt("deactivate mpho while still HoD", [&] { admin.deactivateUser(lect1); });
+        attempt("replace Science HoD with lerato", [&] { admin.replaceHod(science, lect2); });
+        std::cout << "           Science HoD is now: " << users.findActiveHod(science)->username()
+                  << ", mpho active = " << users.findById(lect1)->active() << "\n";
 
-        std::cout << "3. Correct password:\n";
-        tryLogin(auth, "stu1", "Password1");
-
-        std::cout << "4. Five wrong passwords, then the correct one (NFR-04):\n";
-        for (int i = 0; i < 5; ++i) tryLogin(auth, "stu1", "wrong");
-        tryLogin(auth, "stu1", "Password1");
-
-        std::cout << "5. Five minutes later:\n";
-        clock.advanceMinutes(5);
-        tryLogin(auth, "stu1", "Password1");
-
-        std::cout << "6. Rules that are enforced:\n";
-        try {
-            auth.changePassword(people[3]->id(), "Password1", "short");
-        } catch (const lms::ValidationError& e) {
-            std::cout << "  " << e.what() << "\n";
-        }
-        try {
-            factory.create(lms::Role::HoD, "hod2", "No Department", {});
-        } catch (const lms::ValidationError& e) {
-            std::cout << "  " << e.what() << "\n";
-        }
-        try {
-            auto second = factory.create(lms::Role::HoD, "hod2", "Second HoD", 1);
-            second->setPasswordHash(hasher.hash("Password1"));
-            users.save(*second);
-        } catch (const lms::DatabaseError& e) {
-            std::cout << "  Second active HoD for Science refused: " << e.what() << "\n";
-        }
+        std::cout << "3. Courses, lecturers and enrolment (FR-04 to FR-06):\n";
+        int cs101 = 0;
+        attempt("create course CS101", [&] {
+            cs101 = admin.createCourse("CS101", "Programming 1", science);
+        });
+        attempt("create course in department 99", [&] {
+            admin.createCourse("XX1", "Nowhere", 99);
+        });
+        int lect3 = admin.createUser(lms::Role::Lecturer, "thabo", "Thabo Lecturer", "Password1");
+        attempt("assign thabo to CS101", [&] { admin.assignLecturer(cs101, lect3); });
+        attempt("assign student itu as lecturer", [&] { admin.assignLecturer(cs101, stu1); });
+        attempt("enrol itu in CS101", [&] { admin.enrol(cs101, stu1); });
+        std::cout << "           itu's courses: ";
+        for (const auto& c : courses.coursesForStudent(stu1)) std::cout << c.code << ' ';
+        std::cout << "\n";
+        attempt("remove itu from CS101", [&] { admin.unenrol(cs101, stu1); });
+        std::cout << "           itu's courses now: " << courses.coursesForStudent(stu1).size()
+                  << "\n";
     } catch (const std::exception& e) {
         std::cout << "Error: " << e.what() << "\n";
         return 1;

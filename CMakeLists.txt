@@ -34,8 +34,10 @@ add_library(lms_core STATIC
     src/data/Statement.cpp
     src/data/Database.cpp
     src/data/SqliteUserRepository.cpp
+    src/data/SqliteCourseRepository.cpp
     src/services/Argon2Hasher.cpp
     src/services/AuthService.cpp
+    src/services/AdminService.cpp
     ${CMAKE_BINARY_DIR}/generated/Schema.cpp
 )
 target_include_directories(lms_core PUBLIC src)
