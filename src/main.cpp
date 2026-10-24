@@ -10,7 +10,9 @@
 #include "services/Argon2Hasher.h"
 #include "services/AssignmentService.h"
 #include "services/AuditService.h"
+#include "services/BackupService.h"
 #include "services/MarkingService.h"
+#include "services/ModerationService.h"
 #include "services/SubmissionService.h"
 #include "services/TenPercentPerDayPolicy.h"
 
@@ -53,9 +55,10 @@ std::string markText(const std::optional<double>& mark) {
 
 int main() {
     try {
-        // Step 5d demo. The database is in memory, and the files go into the build
+        // Step 5e demo. The database is in memory, and the files go into the build
         // folder (which git ignores), so nothing is left in your project.
         fs::remove_all("build/demo_submissions");
+        fs::remove_all("build/demo_backup");
         fs::create_directories("build/demo_files");
         std::ofstream("build/demo_files/work.txt") << "Some work";
 
@@ -79,102 +82,108 @@ int main() {
                                            clock, store);
         lms::AuditService audit(auditRepo, clock);
         lms::MarkingService marking(db, submissionRepo, assignmentRepo, courses, policy, audit);
+        lms::ModerationService moderation(db, submissionRepo, assignmentRepo, courses, users, audit,
+                                          clock);
+        lms::BackupService backup(db, "build/demo_submissions");
 
-        // Set-up from steps 5a to 5c.
+        // Set-up from steps 5a to 5d: two departments, each with its own HoD.
         int adminId = admin.createUser(lms::Role::Administrator, "admin", "System Admin", "Password1");
-        int mpho = admin.createUser(lms::Role::Lecturer, "mpho", "Mpho Lecturer", "Password1");
+        int mpho = admin.createUser(lms::Role::Lecturer, "mpho", "Mpho HoD", "Password1");
         int cs101 = admin.createCourse("CS101", "Programming 1", admin.createDepartment("Science", mpho));
+        int sello = admin.createUser(lms::Role::Lecturer, "sello", "Sello HoD", "Password1");
+        admin.createDepartment("Maths", sello);
         int thabo = admin.createUser(lms::Role::Lecturer, "thabo", "Thabo Lecturer", "Password1");
-        int lerato = admin.createUser(lms::Role::Lecturer, "lerato", "Lerato Lecturer", "Password1");
-        int sello = admin.createUser(lms::Role::Lecturer, "sello", "Sello Lecturer", "Password1");
         int itu = admin.createUser(lms::Role::Student, "itu", "Itumeleng Student", "Password1");
         int neo = admin.createUser(lms::Role::Student, "neo", "Neo Student", "Password1");
         int lindi = admin.createUser(lms::Role::Student, "lindi", "Lindi Student", "Password1");
         admin.assignLecturer(cs101, thabo);
-        admin.assignLecturer(cs101, lerato);
         for (int student : {itu, neo, lindi}) admin.enrol(cs101, student);
         int project = assignments.createAssignment(thabo, cs101, "Project 1",
                                                    lms::timeFromText("2026-10-30 17:00:00"), 100);
         clock.set("2026-10-30 12:00:00");
         int ituSub = submissions.submit(itu, project, "build/demo_files/work.txt").id;
+        int lindiSub = submissions.submit(lindi, project, "build/demo_files/work.txt").id;
         clock.set("2026-10-31 09:00:00");
         int neoSub = submissions.submit(neo, project, "build/demo_files/work.txt").id;
-        clock.set("2026-11-04 09:00:00");
-        int lindiSub = submissions.submit(lindi, project, "build/demo_files/work.txt").id;
         clock.set("2026-11-05 10:00:00");
+        marking.mark(thabo, ituSub, 70, "Good structure");
+        marking.mark(thabo, neoSub, 60, "Test more cases");
+        clock.set("2026-11-06 10:00:00");
 
-        auto show = [&](int submissionId, const std::string& name) {
-            lms::Submission s = *submissionRepo.findById(submissionId);
-            std::cout << "           " << name << ": " << lms::toString(s.status) << ", days late "
-                      << s.daysLate << ", raw " << markText(s.rawMark) << ", final "
-                      << markText(s.finalMark) << ", feedback \"" << s.feedback << "\"\n";
+        auto show = [&](const std::string& heading) {
+            std::cout << "           " << heading << "\n";
+            for (const auto& s : submissionRepo.findByAssignment(project)) {
+                std::cout << "             " << users.findById(s.studentId)->username() << ": "
+                          << lms::toString(s.status) << ", final " << markText(s.finalMark)
+                          << "\n";
+            }
         };
 
-        std::cout << "1. Submissions to mark for Project 1 (out of 100):\n";
-        for (const auto& s : marking.listForMarking(thabo, project)) {
-            std::cout << "           submission " << s.id << ": " << lms::toString(s.status)
-                      << ", days late " << s.daysLate << "\n";
-        }
-
-        std::cout << "2. thabo marks them (FR-12, FR-13, BR-01):\n";
-        attempt("itu 120 out of 100", [&] { marking.mark(thabo, ituSub, 120, "Great"); });
-        attempt("itu 70 with no feedback", [&] { marking.mark(thabo, ituSub, 70, ""); });
-        attempt("itu 70, on time", [&] { marking.mark(thabo, ituSub, 70, "Good structure"); });
-        attempt("neo 60, 1 day late", [&] { marking.mark(thabo, neoSub, 60, "Test more cases"); });
-        attempt("lindi 80, 5 days late", [&] { marking.mark(thabo, lindiSub, 80, "Strong, but late"); });
-        show(ituSub, "itu");
-        show(neoSub, "neo");
-        show(lindiSub, "lindi");
-
-        std::cout << "3. Other refusals (FR-02):\n";
-        attempt("itu again with mark()", [&] { marking.mark(thabo, ituSub, 75, "Again"); });
-        attempt("sello (not CS101's lecturer) views the list",
-                [&] { marking.listForMarking(sello, project); });
-
-        std::cout << "4. Amending a mark (FR-18):\n";
-        attempt("thabo changes itu to 75 with a reason", [&] {
-            marking.amend(thabo, ituSub, 75, "Good structure", "Missed the appendix at first");
+        std::cout << "1. Who may moderate Project 1 (CS101, Science) (FR-02):\n";
+        attempt("mpho, HoD of Science, lists the marked work", [&] {
+            std::cout << "           " << moderation.listForModeration(mpho, project).size()
+                      << " marked submissions (lindi is not marked yet)\n";
         });
-        attempt("thabo changes neo with no reason",
-                [&] { marking.amend(thabo, neoSub, 65, "Test more cases", " "); });
-        attempt("thabo changes neo with empty feedback",
-                [&] { marking.amend(thabo, neoSub, 65, "", "Re-checked"); });
-        attempt("lerato (also CS101) changes thabo's mark",
-                [&] { marking.amend(lerato, neoSub, 65, "Fine", "I disagree"); });
-        show(ituSub, "itu");
-        {
-            // Pretend the HoD moderated neo's mark (ModerationService comes in step 5e).
-            lms::Submission s = *submissionRepo.findById(neoSub);
-            s.status = lms::SubmissionStatus::Moderated;
-            s.moderatedBy = mpho;
-            s.moderatedAt = clock.now();
-            submissionRepo.save(s);
-        }
-        attempt("thabo changes neo after moderation",
-                [&] { marking.amend(thabo, neoSub, 65, "Test more cases", "Re-checked"); });
+        attempt("sello, HoD of Maths, lists them", [&] { moderation.listForModeration(sello, project); });
+        attempt("thabo, the lecturer, approves", [&] { moderation.approveAll(thabo, project); });
 
-        std::cout << "5. The audit trail (FR-17, NFR-08):\n";
+        std::cout << "2. Approve all (FR-14):\n";
+        attempt("mpho approves all", [&] {
+            std::cout << "           approved " << moderation.approveAll(mpho, project) << "\n";
+        });
+        show("Project 1 now:");
+
+        std::cout << "3. Release is refused until everything is moderated (FR-15):\n";
+        attempt("mpho releases Project 1", [&] { moderation.release(mpho, project); });
+
+        std::cout << "4. Adjusting a mark (FR-14, BR-08):\n";
+        marking.mark(thabo, lindiSub, 55, "Clear, but short");
+        std::cout << "           thabo marks lindi 55\n";
+        attempt("mpho adjusts lindi to 150", [&] {
+            moderation.adjust(mpho, lindiSub, 150, "Too generous?");
+        });
+        attempt("mpho adjusts lindi with no reason", [&] { moderation.adjust(mpho, lindiSub, 60, ""); });
+        attempt("mpho adjusts lindi to 60 with a reason", [&] {
+            moderation.adjust(mpho, lindiSub, 60, "Marking scheme gives 60 for section B");
+        });
+        show("Project 1 now:");
+
+        std::cout << "5. Release (FR-15, FR-16):\n";
+        attempt("mpho releases Project 1", [&] {
+            std::cout << "           released " << moderation.release(mpho, project) << "\n";
+        });
+        auto row = submissions.listForStudent(itu)[0];
+        std::cout << "           itu sees: " << row.title << ", " << row.status << ", feedback \""
+                  << row.feedback << "\"\n";
+
+        std::cout << "6. A released mark can still be corrected by the HoD, with a reason (BR-08):\n";
+        attempt("mpho changes neo from 50 to 55", [&] {
+            moderation.adjust(mpho, neoSub, 55, "Penalty applied twice by mistake");
+        });
+        show("Project 1 now:");
+
+        std::cout << "7. The audit trail (approve all added no entries, FR-17):\n";
         for (const auto& e : audit.entriesFor(*users.findById(adminId))) {
-            std::cout << "           submission " << e.submissionId << "  "
-                      << users.findById(e.userId)->username() << "  " << lms::toText(e.changedAt)
-                      << "  " << markText(e.oldValue) << " -> " << markText(e.newValue) << "  \""
-                      << e.reason << "\"\n";
+            std::cout << "           " << users.findById(e.userId)->username() << "  "
+                      << markText(e.oldValue) << " -> " << markText(e.newValue) << "  \"" << e.reason
+                      << "\"\n";
         }
-        std::cout << "           HoD mpho sees " << audit.entriesFor(*users.findById(mpho)).size()
-                  << " entries for Science\n";
-        attempt("student itu views the audit trail",
-                [&] { audit.entriesFor(*users.findById(itu)); });
 
-        std::cout << "6. If the audit entry can't be saved, the mark isn't saved either (NFR-08):\n";
-        db.prepare("CREATE TEMP TRIGGER fail BEFORE INSERT ON audit_entry "
-                   "BEGIN SELECT RAISE(ABORT, 'simulated disk error'); END").step();
-        attempt("thabo changes itu to 90",
-                [&] { marking.amend(thabo, ituSub, 90, "Good structure", "Re-checked"); });
-        show(ituSub, "itu");
-
-        std::cout << "7. What itu sees before release (BR-07, FR-16):\n";
-        std::cout << "           " << submissions.listForStudent(itu)[0].title << ": "
-                  << submissions.listForStudent(itu)[0].status << "\n";
+        std::cout << "8. Backup (FR-20, NFR-11):\n";
+        attempt("admin backs up to build/demo_backup", [&] { backup.backup("build/demo_backup"); });
+        {
+            // Restoring means opening the copy as the database, so check that it opens
+            // and holds the same data.
+            lms::Database copy("build/demo_backup/lms.db");
+            lms::SqliteSubmissionRepository copiedSubmissions(copy);
+            int files = 0;
+            for ([[maybe_unused]] const auto& f : fs::directory_iterator("build/demo_backup/submissions")) {
+                ++files;
+            }
+            std::cout << "           the copy has " << copiedSubmissions.findByAssignment(project).size()
+                      << " submissions and " << files << " files\n";
+        }
+        attempt("admin backs up to the same folder again", [&] { backup.backup("build/demo_backup"); });
     } catch (const std::exception& e) {
         std::cout << "Error: " << e.what() << "\n";
         return 1;

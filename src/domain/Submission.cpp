@@ -30,4 +30,19 @@ void Submission::recordMark(double raw, double final, const std::string& feedbac
     status = SubmissionStatus::Marked;
 }
 
+void Submission::moderate(double final, int hodId, TimePoint now) {
+    if (isOpen()) throw ValidationError("This work has not been marked yet");
+    finalMark = final;
+    moderatedBy = hodId;
+    moderatedAt = now;
+    if (status == SubmissionStatus::Marked) status = SubmissionStatus::Moderated;
+}
+
+void Submission::release() {
+    if (status != SubmissionStatus::Moderated) {
+        throw ValidationError("Only moderated work can be released");
+    }
+    status = SubmissionStatus::Released;
+}
+
 }  // namespace lms

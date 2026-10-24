@@ -117,6 +117,16 @@ std::vector<std::string> SqliteSubmissionRepository::allFilePaths() {
     return paths;
 }
 
+int SqliteSubmissionRepository::countNotModerated(int assignmentId) {
+    // Uses the index idx_submission_status (assignment_id, status), NFR-02 and R12.
+    Statement stmt = db_.prepare(
+        "SELECT COUNT(*) FROM submission WHERE assignment_id = ? "
+        "AND status IN ('Submitted', 'Late', 'Marked')");
+    stmt.bind(1, assignmentId);
+    stmt.step();
+    return stmt.columnInt(0);
+}
+
 Submission SqliteSubmissionRepository::readSubmission(const Statement& row) {
     Submission s;
     s.id = row.columnInt(0);

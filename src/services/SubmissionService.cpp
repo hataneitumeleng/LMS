@@ -94,15 +94,20 @@ std::vector<StudentAssignmentRow> SubmissionService::listForStudent(int studentI
         for (const Assignment& a : assignments_.forCourse(course.id)) {
             const TimePoint deadline =
                 a.effectiveDeadline(assignments_.findExtension(a.id, studentId));
-            rows.push_back(StudentAssignmentRow{course.code, a.id, a.title, deadline,
-                                                statusForStudent(
-                                                    submissions_.findCurrent(studentId, a.id))});
+            const std::optional<Submission> submission = submissions_.findCurrent(studentId, a.id);
+            StudentAssignmentRow row{course.code, a.id, a.title, deadline,
+                                     statusForStudent(submission, a.maxMark), ""};
+            if (submission && submission->status == SubmissionStatus::Released) {
+                row.feedback = submission->feedback;
+            }
+            rows.push_back(row);
         }
     }
     return rows;
 }
 
-std::string SubmissionService::statusForStudent(const std::optional<Submission>& submission) {
+std::string SubmissionService::statusForStudent(const std::optional<Submission>& submission,
+                                                int maxMark) {
     if (!submission) return "Not submitted";
     switch (submission->status) {
         case SubmissionStatus::Submitted:
@@ -113,8 +118,11 @@ std::string SubmissionService::statusForStudent(const std::optional<Submission>&
         case SubmissionStatus::Marked:
         case SubmissionStatus::Moderated:
             return "Being marked";  // BR-07: marks stay hidden until released
-        case SubmissionStatus::Released:
-            return "Released";
+        case SubmissionStatus::Released: {
+            std::string mark = std::to_string(*submission->finalMark);
+            mark = mark.substr(0, mark.find('.') + 2);  // one decimal place
+            return "Released: " + mark + " / " + std::to_string(maxMark);
+        }
     }
     return "Unknown";
 }

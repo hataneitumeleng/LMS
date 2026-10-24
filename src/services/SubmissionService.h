@@ -18,7 +18,8 @@ struct StudentAssignmentRow {
     int assignmentId = 0;
     std::string title;
     TimePoint effectiveDeadline;
-    std::string status;  // what the student may see (BR-07)
+    std::string status;    // what the student may see (BR-07)
+    std::string feedback;  // only filled in once released (FR-16)
 };
 
 // Student functions: list assignments, submit and resubmit (UC-08, UC-09; FR-09 to FR-11).
@@ -40,7 +41,8 @@ private:
                                TimePoint deadline, const std::string& path);
     Submission resubmission(Submission existing, TimePoint now, TimePoint deadline,
                             const std::string& path);
-    static std::string statusForStudent(const std::optional<Submission>& submission);
+    static std::string statusForStudent(const std::optional<Submission>& submission,
+                                        int maxMark);
 
     Database& db_;
     ISubmissionRepository& submissions_;

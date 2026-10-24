@@ -25,6 +25,8 @@ public:
     virtual std::vector<SubmissionVersion> versions(int submissionId) = 0;
     // Every stored file path, so FileStore can delete files left by a crash.
     virtual std::vector<std::string> allFilePaths() = 0;
+    // Submissions of an assignment that are still Submitted, Late or Marked (FR-15).
+    virtual int countNotModerated(int assignmentId) = 0;
 };
 
 }  // namespace lms

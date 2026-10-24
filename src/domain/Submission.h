@@ -31,6 +31,11 @@ struct Submission {
     // FR-12, FR-18: stores the marks and sets the status to Marked.
     // Allowed while open or Marked, so not after moderation.
     void recordMark(double raw, double final, const std::string& feedbackText, int lecturerId);
+    // FR-14: the HoD sets the final mark (unchanged when approving). Marked becomes
+    // Moderated; a Released mark stays Released (BR-08).
+    void moderate(double final, int hodId, TimePoint now);
+    // FR-15: Moderated becomes Released.
+    void release();
 };
 
 }  // namespace lms

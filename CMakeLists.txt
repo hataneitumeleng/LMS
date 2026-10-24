@@ -48,6 +48,8 @@ add_library(lms_core STATIC
     src/services/SubmissionService.cpp
     src/services/AuditService.cpp
     src/services/MarkingService.cpp
+    src/services/ModerationService.cpp
+    src/services/BackupService.cpp
     ${CMAKE_BINARY_DIR}/generated/Schema.cpp
 )
 target_include_directories(lms_core PUBLIC src)

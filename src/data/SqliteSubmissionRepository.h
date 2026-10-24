@@ -18,6 +18,7 @@ public:
     std::optional<SubmissionVersion> latestVersion(int submissionId) override;
     std::vector<SubmissionVersion> versions(int submissionId) override;
     std::vector<std::string> allFilePaths() override;
+    int countNotModerated(int assignmentId) override;
 
 private:
     static Submission readSubmission(const Statement& row);
