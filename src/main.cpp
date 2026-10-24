@@ -1,41 +1,100 @@
 #include "data/Database.h"
 #include "data/DatabaseError.h"
+#include "data/SqliteUserRepository.h"
+#include "domain/Errors.h"
+#include "domain/UserFactory.h"
+#include "services/Argon2Hasher.h"
+#include "services/AuthService.h"
 
 #include <iostream>
+#include <vector>
+
+namespace {
+
+// A clock we can move forward, to show the 5-minute lockout without waiting.
+class DemoClock : public lms::IClock {
+public:
+    lms::TimePoint now() const override { return now_; }
+    void advanceMinutes(int minutes) { now_ += std::chrono::minutes(minutes); }
+
+private:
+    lms::TimePoint now_ = std::chrono::system_clock::now();
+};
+
+void tryLogin(lms::AuthService& auth, const std::string& username, const std::string& password) {
+    try {
+        auto user = auth.login(username, password);
+        std::cout << "  Login OK: " << user->fullName() << " (" << lms::toString(user->role())
+                  << ")\n";
+    } catch (const lms::AuthError& e) {
+        std::cout << "  Login refused: " << e.what() << "\n";
+    }
+}
+
+}  // namespace
 
 int main() {
     try {
-        lms::Database db("lms.db");
+        // Step 4 demo uses an in-memory database, so nothing is saved to lms.db.
+        lms::Database db(":memory:");
         db.initialiseSchema();
+        db.prepare("INSERT INTO department (name) VALUES ('Science')").step();
 
-        // Step 3 check 1: all 10 tables exist.
-        lms::Statement tables = db.prepare(
-            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table'");
-        tables.step();
-        std::cout << "Tables in lms.db: " << tables.columnInt(0) << "\n";
+        lms::UserFactory factory;
+        lms::SqliteUserRepository users(db, factory);
+        lms::Argon2Hasher hasher;
+        DemoClock clock;
+        lms::AuthService auth(users, hasher, clock);
 
-        // Step 3 check 2: a value with a quote is stored safely by bind(),
-        // then the transaction is rolled back so nothing is kept.
-        db.begin();
-        lms::Statement insert = db.prepare("INSERT INTO department (name) VALUES (?)");
-        insert.bind(1, std::string("O'Brien's Department'); DROP TABLE user; --"));
-        insert.step();
-        lms::Statement read = db.prepare("SELECT name FROM department WHERE id = ?");
-        read.bind(1, db.lastInsertId());
-        read.step();
-        std::cout << "Stored safely: " << read.columnText(0) << "\n";
-        db.rollback();
+        std::cout << "1. Users created by UserFactory and saved by SqliteUserRepository:\n";
+        std::vector<std::unique_ptr<lms::User>> people;
+        people.push_back(factory.create(lms::Role::Administrator, "admin", "Thabo Admin", {}));
+        people.push_back(factory.create(lms::Role::Lecturer, "lect1", "Mpho Lecturer", {}));
+        people.push_back(factory.create(lms::Role::HoD, "hod1", "Lerato HoD", 1));
+        people.push_back(factory.create(lms::Role::Student, "stu1", "Itumeleng Student", {}));
+        for (auto& person : people) {
+            person->setPasswordHash(hasher.hash("Password1"));
+            person->setId(users.save(*person));
+            // Polymorphism: role() runs the version of the real subclass.
+            std::cout << "  " << person->username() << " -> " << lms::toString(person->role())
+                      << "\n";
+        }
 
-        lms::Statement count = db.prepare("SELECT COUNT(*) FROM department");
-        count.step();
-        std::cout << "Departments after rollback: " << count.columnInt(0) << "\n";
+        std::cout << "2. Password stored in the database (Argon2id, not plain text):\n  "
+                  << users.findByUsername("stu1")->passwordHash().substr(0, 40) << "...\n";
 
-        // Step 3 check 3: a foreign key error becomes a DatabaseError, not a crash.
-        lms::Statement bad = db.prepare(
-            "INSERT INTO course (code, title, department_id) VALUES ('X1', 'Test', 999)");
-        bad.step();
-    } catch (const lms::DatabaseError& e) {
-        std::cout << "Database error caught: " << e.what() << "\n";
+        std::cout << "3. Correct password:\n";
+        tryLogin(auth, "stu1", "Password1");
+
+        std::cout << "4. Five wrong passwords, then the correct one (NFR-04):\n";
+        for (int i = 0; i < 5; ++i) tryLogin(auth, "stu1", "wrong");
+        tryLogin(auth, "stu1", "Password1");
+
+        std::cout << "5. Five minutes later:\n";
+        clock.advanceMinutes(5);
+        tryLogin(auth, "stu1", "Password1");
+
+        std::cout << "6. Rules that are enforced:\n";
+        try {
+            auth.changePassword(people[3]->id(), "Password1", "short");
+        } catch (const lms::ValidationError& e) {
+            std::cout << "  " << e.what() << "\n";
+        }
+        try {
+            factory.create(lms::Role::HoD, "hod2", "No Department", {});
+        } catch (const lms::ValidationError& e) {
+            std::cout << "  " << e.what() << "\n";
+        }
+        try {
+            auto second = factory.create(lms::Role::HoD, "hod2", "Second HoD", 1);
+            second->setPasswordHash(hasher.hash("Password1"));
+            users.save(*second);
+        } catch (const lms::DatabaseError& e) {
+            std::cout << "  Second active HoD for Science refused: " << e.what() << "\n";
+        }
+    } catch (const std::exception& e) {
+        std::cout << "Error: " << e.what() << "\n";
+        return 1;
     }
     return 0;
 }

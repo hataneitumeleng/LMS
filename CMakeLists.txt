@@ -27,8 +27,15 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS sql/schema.sql)
 # so the GoogleTest tests (Phase 5) can link the same code.
 add_library(lms_core STATIC
     src/domain/SubmissionStatus.cpp
+    src/domain/Role.cpp
+    src/domain/TimeFormat.cpp
+    src/domain/User.cpp
+    src/domain/UserFactory.cpp
     src/data/Statement.cpp
     src/data/Database.cpp
+    src/data/SqliteUserRepository.cpp
+    src/services/Argon2Hasher.cpp
+    src/services/AuthService.cpp
     ${CMAKE_BINARY_DIR}/generated/Schema.cpp
 )
 target_include_directories(lms_core PUBLIC src)
