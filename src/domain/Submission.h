@@ -28,6 +28,9 @@ struct Submission {
     bool canResubmit(TimePoint now, TimePoint deadline) const;
     // Sets Submitted (0 days) or Late (1 or more days). Only allowed while open.
     void setLateness(int days);
+    // FR-12, FR-18: stores the marks and sets the status to Marked.
+    // Allowed while open or Marked, so not after moderation.
+    void recordMark(double raw, double final, const std::string& feedbackText, int lecturerId);
 };
 
 }  // namespace lms

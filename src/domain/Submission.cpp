@@ -18,4 +18,16 @@ void Submission::setLateness(int days) {
     status = days > 0 ? SubmissionStatus::Late : SubmissionStatus::Submitted;
 }
 
+void Submission::recordMark(double raw, double final, const std::string& feedbackText,
+                            int lecturerId) {
+    if (!isOpen() && status != SubmissionStatus::Marked) {
+        throw ValidationError("This mark has been moderated and can only be changed by the HoD");
+    }
+    rawMark = raw;
+    finalMark = final;
+    feedback = feedbackText;
+    markedBy = lecturerId;
+    status = SubmissionStatus::Marked;
+}
+
 }  // namespace lms
