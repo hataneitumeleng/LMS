@@ -93,6 +93,10 @@ if(GTest_FOUND)
         tests/unit/PenaltyPolicyTest.cpp
         tests/unit/SubmissionTest.cpp
         tests/unit/UserTest.cpp
+        tests/unit/Argon2HasherTest.cpp
+        tests/service/AuthServiceTest.cpp
+        tests/service/AssignmentServiceTest.cpp
+        tests/service/SubmissionServiceTest.cpp
     )
     target_link_libraries(lms_tests PRIVATE lms_core GTest::gtest GTest::gtest_main)
     include(GoogleTest)
