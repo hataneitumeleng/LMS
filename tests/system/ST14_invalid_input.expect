@@ -1,0 +1,26 @@
+# NFR-07: wrong input is refused with a message, and the program never stops.
+# Each "Please ..." or error line below is one invalid input that was handled.
+Please choose 0 to 1
+Please choose 0 to 1
+Please type a whole number
+Invalid username or password
+Welcome, Itumeleng Hatane (Student).
+Welcome, Thabo Mokoena (Lecturer).
+No submission with id 99
+No assignment with id 0
+Student 99 is not enrolled in this course
+Max mark must be from 1 to 100
+No submission with id 42
+Welcome, Mpho Moloi (HoD).
+No assignment with id 99
+No submission with id 99
+No assignment with id -3
+No submission with id 99
+Welcome, System Admin (Administrator).
+No user with id 99
+No user with id 99
+No course with id 99
+No active user with id 99
+Goodbye.
+! Something went wrong
+! The program could not start

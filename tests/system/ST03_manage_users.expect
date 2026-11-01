@@ -1,0 +1,15 @@
+# UC-02, FR-03, NFR-06
+Password must be at least 8 characters
+Username 'itu' is already taken
+Name changed.
+# answering n to the confirmation changes nothing
+Deactivate this user? They will not be able to log in (y/n)
+Deactivate this user? They will not be able to log in (y/n)
+User deactivated.
+# an active HoD cannot be deactivated
+This user is an active HoD. Replace the HoD first
+[6] neo  Neo Khumalo-Dube  Student  (deactivated)
+Logged out.
+# the deactivated user cannot log in
+Invalid username or password
+! Welcome, Neo

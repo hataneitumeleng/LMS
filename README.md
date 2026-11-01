@@ -48,6 +48,17 @@ ctest --test-dir build --output-on-failure
 ```
 They use a fake clock (`tests/fakes/FakeClock.h`), so they give the same result on any day.
 
+| Folder | Kind of test |
+|---|---|
+| `tests/unit` | Unit tests: one class at a time (penalty, Submission states, User, Argon2) |
+| `tests/service` | Service tests: each service with in-memory fake repositories (`tests/fakes`) |
+| `tests/integration` | Integration tests: the real SQLite repositories and services on a real database file |
+| `tests/system` | System tests: typed input into the real `lms` program, checked against `.expect` files |
+
+Only the system tests: `ctest --test-dir build -R "^System[.]"`. The test cases and results are in `docs/SYSTEM_TESTS.md`, the defects in `docs/DEFECT_LOG.md`.
+
+**Coverage.** Configure a second build with `-DLMS_COVERAGE=ON` and run gcovr. GitHub Actions does this in the `coverage` job, which fails below 70% for the business layer and puts the report on the run's summary page.
+
 ## Timing test (R12, NFR-01, NFR-02)
 `lms_benchmark` fills `benchmark.db` with 800 students, 20 courses and 20,000 marked submissions, then times login and every list screen against the limits:
 ```
@@ -55,7 +66,7 @@ They use a fake clock (`tests/fakes/FakeClock.h`), so they give the same result 
 ```
 
 ## Automatic build
-Every push to GitHub runs `.github/workflows/build.yml`. It builds the program on Ubuntu 22.04 and on Windows (MSYS2), runs a short start-up test, and runs the timing test (NFR-10).
+Every push to GitHub runs `.github/workflows/build.yml`. It builds the program on Ubuntu 22.04 and on Windows (MSYS2), runs all the tests (unit, service, integration and system), a short start-up test and the timing test (NFR-10), and measures test coverage.
 
 ## Project layout
 | Folder | Layer (Week 3, Figure 1) |

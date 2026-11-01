@@ -1,0 +1,16 @@
+# UC-08, FR-12, FR-13, FR-18, BR-07
+# a lecturer who does not teach the course cannot mark
+Not allowed: You do not teach this course
+The mark must be from 0 to 100
+Please type a number, for example 65 or 65.5
+Feedback is required
+Mark saved. Final mark after any late penalty: 70.0
+This work is already marked. Use amend to change the mark
+A reason is required to change a mark
+Mark changed. New final mark: 75.0
+[1] student 5  Marked  days late 0  raw 75.0  final 75.0
+# BR-07: the student sees no mark and no feedback until release
+[1] CS101  Project 1  due 2099-12-31 17:00:00  Being marked
+! Feedback: Better on reflection
+# BR-06: no resubmission once marked
+Resubmission refused: this work has already been marked

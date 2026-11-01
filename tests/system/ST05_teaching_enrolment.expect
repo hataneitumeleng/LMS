@@ -1,0 +1,16 @@
+# UC-04, UC-05, FR-05, FR-06
+# before enrolment sipho has nothing
+Welcome, Sipho Ndlovu (Student).
+You have no assignments yet.
+Student enrolled.
+# only students can be enrolled, only lecturers can teach
+thabo is not a Student
+itu is not a Lecturer
+Lecturer assigned.
+# after enrolment sipho sees Project 1, after assignment lerato teaches CS101
+[1] CS101  Project 1  due 2099-12-31 17:00:00  Not submitted
+[1] CS101 Programming 1
+[1] Project 1  due 2099-12-31 17:00:00  out of 100
+Remove this student from the course? (y/n)
+Student removed from the course.
+You have no assignments yet.

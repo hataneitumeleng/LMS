@@ -1,0 +1,12 @@
+# UC-07, FR-08, BR-03
+# more than 14 days, no reason, earlier than the deadline, a student not enrolled: refused
+An extension can be at most 14 days
+A reason is required
+The new deadline must be later than the normal deadline
+Student 7 is not enrolled in this course
+Extension granted.
+# itu sees the new deadline, neo still sees the normal one
+Welcome, Itumeleng Hatane (Student).
+[1] CS101  Project 1  due 2100-01-05 17:00:00  Not submitted
+Welcome, Neo Khumalo (Student).
+[1] CS101  Project 1  due 2099-12-31 17:00:00  Not submitted

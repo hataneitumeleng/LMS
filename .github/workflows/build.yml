@@ -1,5 +1,7 @@
 # On every push, on both systems from NFR-10: builds both programs (console and Qt desktop),
-# runs the GoogleTest tests, a short start-up test and the R12 timing test.
+# runs all the tests (GoogleTest, the console system tests and, on Ubuntu, the GUI acceptance
+# checks), a short start-up test and the R12 timing test.
+# A third job measures test coverage of the business layer (Phase 5: at least 70%).
 name: build
 
 on:
@@ -17,13 +19,20 @@ jobs:
           sudo apt-get install -y g++ cmake ninja-build pkg-config libsqlite3-dev libsodium-dev libgtest-dev qt6-base-dev libgl1-mesa-dev
       - name: Build
         run: |
-          cmake -S . -B build -G Ninja
+          cmake -S . -B build -G Ninja -DLMS_GUI_TESTS=ON
           cmake --build build
           test -f build/lms_gui
-      - name: Unit tests (GoogleTest)
+      - name: All tests (unit, service, integration, system, GUI acceptance)
         run: |
           test -f build/lms_tests || test -f build/lms_tests.exe
           ctest --test-dir build --output-on-failure
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-evidence
+          path: |
+            build/gui-acceptance/shots/
+            build/system-tests/*/output.txt
       - name: Start-up test (create the admin, log in, log out, exit)
         run: |
           printf 'admin\nSystem Admin\nPassword1\n1\nadmin\nPassword1\n0\n0\n' | ./build/lms | tee run.txt
@@ -31,6 +40,45 @@ jobs:
           grep -q "Goodbye" run.txt
       - name: R12 timing test (800 students, 20 courses)
         run: ./build/lms_benchmark
+
+  coverage:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools and libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ cmake ninja-build pkg-config libsqlite3-dev libsodium-dev libgtest-dev
+          pip install gcovr==7.2
+      - name: Build with coverage switched on
+        run: |
+          cmake -S . -B build-coverage -G Ninja -DLMS_COVERAGE=ON
+          cmake --build build-coverage
+      - name: Run the unit and integration tests
+        run: ctest --test-dir build-coverage --output-on-failure -E "^System[.]"
+      - name: Coverage report (business layer = src/domain and src/services, must be >= 70%; then the system tests)
+        run: |
+          mkdir -p coverage
+          gcovr -r . build-coverage --filter src/domain/ --filter src/services/ \
+                --exclude-throw-branches --txt coverage/business.txt \
+                --html-details coverage/index.html --fail-under-line 70
+          ctest --test-dir build-coverage --output-on-failure -R "^System[.]"
+          gcovr -r . build-coverage --filter src/ --exclude src/gui/ --exclude-throw-branches --txt coverage/all.txt
+          cat coverage/business.txt
+          {
+            echo '## Business-layer coverage (src/domain + src/services)'
+            echo '```'
+            cat coverage/business.txt
+            echo '```'
+            echo '## Whole program except the Qt windows (src without src/gui), after the system tests too'
+            echo '```'
+            tail -n 3 coverage/all.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
 
   windows:
     runs-on: windows-latest
@@ -56,7 +104,7 @@ jobs:
           cmake -S . -B build -G Ninja
           cmake --build build
           test -f build/lms_gui.exe
-      - name: Unit tests (GoogleTest)
+      - name: All tests (unit, service, integration, system)
         run: |
           test -f build/lms_tests || test -f build/lms_tests.exe
           ctest --test-dir build --output-on-failure

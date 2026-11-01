@@ -1,0 +1,68 @@
+admin
+System Admin
+Password1
+1
+admin
+Password1
+1
+2
+2
+mpho
+Mpho Moloi
+Password1
+2
+2
+thabo
+Thabo Mokoena
+Password1
+2
+2
+lerato
+Lerato Dlamini
+Password1
+2
+1
+itu
+Itumeleng Hatane
+Password1
+2
+1
+neo
+Neo Khumalo
+Password1
+2
+1
+sipho
+Sipho Ndlovu
+Password1
+0
+2
+2
+Science
+2
+5
+CS101
+Programming 1
+1
+7
+1
+3
+8
+1
+5
+8
+1
+6
+0
+0
+1
+thabo
+Password1
+2
+1
+Project 1
+Essay on software testing
+2099-12-31 17:00
+100
+
+0

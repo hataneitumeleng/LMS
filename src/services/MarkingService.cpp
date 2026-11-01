@@ -65,14 +65,6 @@ double MarkingService::amend(int lecturerId, int submissionId, double rawMark,
     return finalMark;
 }
 
-SubmissionVersion MarkingService::latestFile(int lecturerId, int submissionId) {
-    const Submission submission = requireSubmission(submissionId);
-    requireAssignmentTaughtBy(lecturerId, submission.assignmentId);
-    std::optional<SubmissionVersion> version = submissions_.latestVersion(submissionId);
-    if (!version) throw ValidationError("This submission has no file");
-    return *version;
-}
-
 Submission MarkingService::requireSubmission(int submissionId) {
     std::optional<Submission> submission = submissions_.findById(submissionId);
     if (!submission) {

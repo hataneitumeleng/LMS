@@ -1,0 +1,14 @@
+# UC-01, FR-01, FR-02, NFR-07: each role gets its own menu; bad input is asked again
+Invalid username or password
+Invalid username or password
+Welcome, Itumeleng Hatane (Student).
+=== Student menu: Itumeleng Hatane ===
+Welcome, Thabo Mokoena (Lecturer).
+=== Lecturer menu: Thabo Mokoena ===
+Welcome, Mpho Moloi (HoD).
+=== Head of Department menu: Mpho Moloi ===
+Welcome, System Admin (Administrator).
+=== Administrator menu: System Admin ===
+Please type a whole number
+Please choose 0 to 5
+Goodbye.

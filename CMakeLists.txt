@@ -121,12 +121,25 @@ else()
     message(STATUS "GoogleTest not found: lms_tests is skipped")
 endif()
 
+# ---- System tests (Phase 5): the real console program, driven by typed input ----
+# Each tests/system/ST*.txt is one test: setup.txt + that file are typed into lms, and
+# the output must contain the lines in the matching .expect file (RunConsoleTest.cmake).
+# They need no GoogleTest. Run only these with:  ctest --test-dir build -R "^System[.]"
+file(GLOB LMS_SYSTEM_TESTS CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/tests/system/ST*.txt)
+foreach(scenario IN LISTS LMS_SYSTEM_TESTS)
+    get_filename_component(name ${scenario} NAME_WE)
+    add_test(NAME System.${name}
+             COMMAND ${CMAKE_COMMAND} -DLMS=$<TARGET_FILE:lms> -DNAME=${name}
+                     -DSYSTEM_DIR=${CMAKE_SOURCE_DIR}/tests/system
+                     -DWORK=${CMAKE_BINARY_DIR}/system-tests/${name}
+                     -P ${CMAKE_SOURCE_DIR}/tests/system/RunConsoleTest.cmake)
+endforeach()
+
 # ---- lms_gui: the Qt desktop program (a second presentation layer) ----
 # Built only when Qt 6 Widgets is installed, so the console program still builds without it.
 find_package(Qt6 COMPONENTS Widgets QUIET)
 if(Qt6_FOUND)
-    add_executable(lms_gui
-        src/main_gui.cpp
+    set(LMS_GUI_SOURCES
         src/gui/GuiCommon.cpp
         src/gui/LoginDialog.cpp
         src/gui/ChangePasswordDialog.cpp
@@ -137,6 +150,7 @@ if(Qt6_FOUND)
         src/gui/AdminWindow.cpp
         src/gui/GuiApp.cpp
     )
+    add_executable(lms_gui src/main_gui.cpp ${LMS_GUI_SOURCES})
     target_link_libraries(lms_gui PRIVATE lms_core Qt6::Widgets)
     # On Windows: a normal window program, without a black console window behind it.
     set_target_properties(lms_gui PROPERTIES WIN32_EXECUTABLE ON)
@@ -144,6 +158,21 @@ if(Qt6_FOUND)
         target_compile_options(lms_gui PRIVATE -Wall -Wextra -Wpedantic)
     endif()
     message(STATUS "Qt ${Qt6_VERSION} found: building lms_gui")
+
+    # GUI acceptance checks (Phase 5): a program that fills in the windows and presses the
+    # buttons, then saves screenshots. Run it yourself with:
+    #   .\build\lms_gui_acceptance.exe gui-acceptance
+    # ctest runs it only when configured with -DLMS_GUI_TESTS=ON (GitHub Actions does),
+    # because it needs Qt's "offscreen" platform plugin.
+    add_executable(lms_gui_acceptance tests/gui/GuiAcceptanceTest.cpp ${LMS_GUI_SOURCES})
+    target_include_directories(lms_gui_acceptance PRIVATE src)
+    target_link_libraries(lms_gui_acceptance PRIVATE lms_core Qt6::Widgets)
+    option(LMS_GUI_TESTS "Let ctest run the GUI acceptance checks (needs Qt offscreen)" OFF)
+    if(LMS_GUI_TESTS)
+        add_test(NAME Gui.Acceptance
+                 COMMAND lms_gui_acceptance ${CMAKE_BINARY_DIR}/gui-acceptance)
+        set_tests_properties(Gui.Acceptance PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    endif()
 else()
     message(STATUS "Qt 6 not found: lms_gui is skipped (the console program lms is built)")
 endif()

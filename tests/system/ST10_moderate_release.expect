@@ -1,0 +1,33 @@
+# UC-12, UC-13, UC-11, UC-14, FR-14 to FR-17, BR-08, NFR-06
+[1] CS101  Project 1  2 submission(s), 2 not moderated
+# FR-15: release is refused until everything is moderated
+Release the marks? Students will see them, and this cannot be undone (y/n)
+Cannot release: 2 submission(s) are not moderated yet
+# answering n changes nothing
+Approve every marked submission without changes? (y/n)
+Approve every marked submission without changes? (y/n)
+2 submission(s) approved.
+[1] CS101  Project 1  2 submission(s), 0 not moderated
+[1] student 5  Moderated  raw 70.0  days late 0  final 70.0
+Feedback: Clear argument
+A reason is required to adjust a mark
+Mark adjusted and recorded in the audit trail.
+2 mark(s) released to students.
+# BR-08: the HoD can still adjust after release, with a reason
+Mark adjusted and recorded in the audit trail.
+# the HoD's audit trail: two first marks and two adjustments
+First mark
+First mark
+Second marker agreed
+Appeal upheld
+# FR-16: students now see their mark and feedback
+Welcome, Itumeleng Hatane (Student).
+Released: 72.0 / 100
+Feedback: Clear argument
+Welcome, Neo Khumalo (Student).
+Released: 65.0 / 100
+Feedback: Needs more examples
+# the administrator sees the whole audit trail
+Welcome, System Admin (Administrator).
+Second marker agreed
+Appeal upheld

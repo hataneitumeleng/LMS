@@ -1,5 +1,7 @@
 #include "ui/LecturerMenu.h"
 
+#include "domain/Errors.h"
+
 #include <filesystem>
 
 namespace lms {
@@ -60,9 +62,16 @@ void LecturerMenu::createAssignment() {
     const int id = services_.assignments.createAssignment(user_.id(), courseId, title, deadline,
                                                           maxMark, description);
     io_.print("Assignment created with number " + std::to_string(id) + ".");
-    if (!brief.empty()) {
+    if (brief.empty()) return;
+    // The assignment exists even if the file can't be attached, so say so clearly (defect
+    // D-09, found in system test ST06): otherwise the lecturer may think nothing was saved
+    // and create the assignment a second time.
+    try {
         services_.assignments.attachBrief(user_.id(), id, brief);
         io_.print("Brief attached.");
+    } catch (const ValidationError& e) {
+        io_.error(std::string(e.what()) + ". The assignment was created without a brief; " +
+                  "use option 8 to attach it.");
     }
 }
 

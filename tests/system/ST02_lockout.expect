@@ -1,0 +1,10 @@
+# NFR-04: 5 wrong passwords lock the account for 5 minutes, even the right password is refused
+Invalid username or password
+Invalid username or password
+Invalid username or password
+Invalid username or password
+Invalid username or password
+Account locked until
+# another user is not affected
+Welcome, Itumeleng Hatane (Student).
+! Welcome, Neo Khumalo

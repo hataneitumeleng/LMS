@@ -1,0 +1,19 @@
+# UC-03, FR-04, Section 5.2
+# a student cannot be made HoD
+itu is not a Lecturer
+Department created with number 2.
+Department renamed.
+No department with id 9
+Course created with number 2.
+The current HoD will be deactivated. Continue? (y/n)
+HoD replaced.
+Course changed.
+Department [2] Arts  HoD: Thabo Mokoena
+Course [2] ART101 Drawing
+Department [1] Computer Science  HoD: Mpho Moloi
+Course [1] CS101 Programming in C++
+# the old HoD (lerato) was deactivated, the new one (thabo) is now an HoD
+Invalid username or password
+Welcome, Thabo Mokoena (HoD).
+=== Head of Department menu: Thabo Mokoena ===
+No assignments in your department yet.

@@ -1,0 +1,15 @@
+# UC-09, UC-10, FR-09, FR-10, FR-11, BR-05
+[1] CS101  Project 1  due 2099-12-31 17:00:00  Not submitted
+File not found: missing.txt
+The file is empty: empty.txt
+No assignment with id 9
+# a path in quotes (Windows "Copy as path") works too
+Received on time. You can resubmit until the deadline.
+[1] CS101  Project 1  due 2099-12-31 17:00:00  Submitted
+Received on time. You can resubmit until the deadline.
+# a student who is not enrolled cannot submit
+Not allowed: You are not enrolled in this course
+# the lecturer sees one submission, and the file to mark is version 2
+[1] student 5  Submitted  days late 0
+Version 2, submitted
+sub1_v2.txt

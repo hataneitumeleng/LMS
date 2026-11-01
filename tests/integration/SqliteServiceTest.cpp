@@ -158,8 +158,8 @@ TEST_F(SqliteServiceTest, OrphanFilesAreRemovedAtStartUp) {
 
 // ---- The composition root both programs start from ----
 
-TEST(SystemTest, BuildsEverythingOnANewDatabase) {
-    const auto folder = std::filesystem::temp_directory_path() / "lms_it_SystemTest";
+TEST(CompositionRootTest, SystemBuildsEverythingOnANewDatabase) {
+    const auto folder = std::filesystem::temp_directory_path() / "lms_it_CompositionRootTest";
     std::filesystem::remove_all(folder);
     std::filesystem::create_directories(folder);
     const std::string dbFile = (folder / "lms.db").generic_string();

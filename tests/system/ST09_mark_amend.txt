@@ -1,0 +1,64 @@
+1
+itu
+Password1
+2
+1
+essay.txt
+0
+1
+neo
+Password1
+2
+1
+essay2.txt
+0
+1
+lerato
+Password1
+5
+1
+70
+Good
+0
+1
+thabo
+Password1
+5
+1
+101
+Too high
+5
+1
+abc
+70
+   
+5
+1
+70
+Clear argument, good structure
+5
+1
+80
+Second try
+6
+1
+75
+Better on reflection
+ 
+6
+1
+75
+Better on reflection
+Re-read the conclusion
+4
+1
+0
+1
+itu
+Password1
+1
+2
+1
+essay2.txt
+0
+0

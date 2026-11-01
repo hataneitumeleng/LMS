@@ -5,12 +5,11 @@ This project follows a small subset of the C++ Core Guidelines (Stroustrup and S
 ## 1. Files and layout
 - One class per header (`.h`) and source (`.cpp`) file, named after the class: `SubmissionService.h` and `SubmissionService.cpp`. Small helper types used by only one class may share its file (for example `StudentAssignmentRow` in `SubmissionService.h`, and the two admin sub-menus in `AdminMenu.h`).
 - Folders follow the layers in Figure 1:
-  - `src/ui` holds the console menus, and `src/gui` the Qt windows (two presentation layers);
-  - `src/app` holds `System`, the composition root both programs start from, and `Services`;
+  - `src/ui` holds the menus;
   - `src/services` holds the business logic;
   - `src/data` holds the repositories and Database;
   - `src/domain` holds the domain classes.
-- A file may only include files from its own layer or a lower one: ui and gui → services → data → domain. The menus and windows never include a repository. Only `src/app/System` (the composition root) knows the concrete classes.
+- A file may only include files from its own layer or a lower one: ui → services → data → domain. The menus never include a repository.
 - Headers start with `#pragma once`. All code is inside `namespace lms`.
 
 ## 2. Naming
@@ -33,8 +32,8 @@ Class, method and table names must match the Week 3 class diagrams and ERD exact
 ## 4. Safety rules
 - **SQL:** every query uses a prepared statement with `sqlite3_bind_*`. User input is never added to an SQL string (security, FR-01).
 - **Passwords:** stored only as Argon2id hashes from libsodium. Plain passwords are never written to a file, the database or the screen.
-- **Memory:** no `new`/`delete` in normal code, except Qt widgets in `src/gui`, which are created with `new` and owned and deleted by their parent widget. Use `std::unique_ptr`, `std::vector` and `std::string`. SQLite handles are wrapped in classes that close them in the destructor (RAII).
-- **Errors:** errors are reported with exceptions derived from `std::runtime_error` (for example `ValidationError`, `DatabaseError`). Each menu, and `runAction` in the windows, catches them and shows a message, so the program never crashes on bad input (NFR-07).
+- **Memory:** no `new`/`delete` in normal code. Use `std::unique_ptr`, `std::vector` and `std::string`. SQLite handles are wrapped in classes that close them in the destructor (RAII).
+- **Errors:** errors are reported with exceptions derived from `std::runtime_error` (for example `ValidationError`, `DatabaseError`). Each menu catches them and shows a message, so the program never crashes on bad input (NFR-07).
 - **Input:** every value typed by a user is checked before it reaches a service: numbers, dates, mark ranges and empty reasons.
 - **Time:** no code reads the clock directly. It asks `IClock`, so tests can fix the time.
 - **const:** methods that do not change an object are marked `const`. Parameters that are not changed are passed by `const&`.

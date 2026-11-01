@@ -1,0 +1,23 @@
+# UC-06, FR-07, FR-24
+# an impossible date is asked for again
+Please type the date and time like 2026-10-30 17:00
+Max mark must be from 1 to 100
+Assignment created with number 2.
+Brief attached.
+Title must not be empty
+Deadline must be in the future
+# defect D-09: a wrong brief path must say clearly that the assignment WAS created
+Assignment created with number 3.
+File not found: nosuch.pdf. The assignment was created without a brief; use option 8 to attach it.
+[2] Project 2  due 2099-11-30 17:00:00  out of 50
+Brief:
+brief2_1.txt
+[3] Project 3  due 2099-11-30 17:00:00  out of 50
+# lerato does not teach CS101
+Not allowed: You do not teach this course
+# the student sees both assignments and the brief's path
+[2] CS101  Project 2  due 2099-11-30 17:00:00  Not submitted
+Brief:
+[1] CS101  Project 1  due 2099-12-31 17:00:00  Not submitted
+! Sneaky
+! Old work
