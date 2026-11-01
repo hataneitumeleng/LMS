@@ -142,9 +142,9 @@ std::string SubmissionService::statusForStudent(const std::optional<Submission>&
         case SubmissionStatus::Moderated:
             return "Being marked";  // BR-07: marks stay hidden until released
         case SubmissionStatus::Released: {
-            std::string mark = std::to_string(*submission->finalMark);
-            mark = mark.substr(0, mark.find('.') + 2);  // one decimal place
-            return "Released: " + mark + " / " + std::to_string(maxMark);
+           std::string mark = std::to_string(*submission->finalMark);
+           mark.resize(mark.find('.') + 2);  // one decimal place
+           return "Released: " + mark + " / " + std::to_string(maxMark);
         }
     }
     return "Unknown";

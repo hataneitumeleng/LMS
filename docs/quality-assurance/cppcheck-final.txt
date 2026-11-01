@@ -1,0 +1,6 @@
+src\gui\AdminWindow.cpp:265:89: warning: Consider using std::find_if algorithm instead of a raw loop. [useStlAlgorithm]
+        if (u->role() == Role::HoD && u->active() && u->departmentId() == departmentId) {
+                                                                                        ^
+src\services\ModerationService.cpp:38:32: warning: Consider using std::copy_if algorithm instead of a raw loop. [useStlAlgorithm]
+        if (!s.isOpen()) marked.push_back(s);
+                               ^
