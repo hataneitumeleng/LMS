@@ -4,3 +4,5 @@ buildtest/
 .vscode/
 submissions/
 backups/
+build-coverage/
+coverage/

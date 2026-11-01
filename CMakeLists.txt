@@ -5,6 +5,15 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# ---- Test coverage (Phase 5): cmake -S . -B build-coverage -G Ninja -DLMS_COVERAGE=ON ----
+# Adds gcc's --coverage flags to every target, so running the tests writes .gcda files that
+# gcovr turns into a report. Off by default: a normal build is not slowed down.
+option(LMS_COVERAGE "Build with gcc coverage instrumentation" OFF)
+if(LMS_COVERAGE)
+    add_compile_options(--coverage -O0 -g)
+    add_link_options(--coverage)
+endif()
+
 # ---- Libraries (same lines as the R11 build test) ----
 find_package(SQLite3 REQUIRED)
 find_package(PkgConfig REQUIRED)
@@ -97,6 +106,12 @@ if(GTest_FOUND)
         tests/service/AuthServiceTest.cpp
         tests/service/AssignmentServiceTest.cpp
         tests/service/SubmissionServiceTest.cpp
+        tests/service/MarkingServiceTest.cpp
+        tests/service/ModerationServiceTest.cpp
+        tests/service/AuditServiceTest.cpp
+        tests/service/AdminServiceTest.cpp
+        tests/integration/SqliteRepositoryTest.cpp
+        tests/integration/SqliteServiceTest.cpp
     )
     target_link_libraries(lms_tests PRIVATE lms_core GTest::gtest GTest::gtest_main)
     include(GoogleTest)
