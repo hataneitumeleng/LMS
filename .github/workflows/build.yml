@@ -1,5 +1,5 @@
-# Builds both programs (console and Qt desktop) on every push, on both systems from NFR-10, then runs a
-# short start-up test and the R12 timing test.
+# On every push, on both systems from NFR-10: builds both programs (console and Qt desktop),
+# runs the GoogleTest tests, a short start-up test and the R12 timing test.
 name: build
 
 on:
@@ -20,6 +20,10 @@ jobs:
           cmake -S . -B build -G Ninja
           cmake --build build
           test -f build/lms_gui
+      - name: Unit tests (GoogleTest)
+        run: |
+          test -f build/lms_tests || test -f build/lms_tests.exe
+          ctest --test-dir build --output-on-failure
       - name: Start-up test (create the admin, log in, log out, exit)
         run: |
           printf 'admin\nSystem Admin\nPassword1\n1\nadmin\nPassword1\n0\n0\n' | ./build/lms | tee run.txt
@@ -52,6 +56,10 @@ jobs:
           cmake -S . -B build -G Ninja
           cmake --build build
           test -f build/lms_gui.exe
+      - name: Unit tests (GoogleTest)
+        run: |
+          test -f build/lms_tests || test -f build/lms_tests.exe
+          ctest --test-dir build --output-on-failure
       - name: Start-up test (create the admin, log in, log out, exit)
         run: |
           printf 'admin\nSystem Admin\nPassword1\n1\nadmin\nPassword1\n0\n0\n' | ./build/lms.exe | tee run.txt

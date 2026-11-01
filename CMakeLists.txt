@@ -84,6 +84,24 @@ endif()
 add_executable(lms_benchmark tools/benchmark.cpp)
 target_link_libraries(lms_benchmark PRIVATE lms_core)
 
+# ---- lms_tests: GoogleTest unit and integration tests (Phase 5, NFR-09) ----
+# Built only when GoogleTest is installed. Run them with:  ctest --test-dir build
+enable_testing()
+find_package(GTest QUIET)
+if(GTest_FOUND)
+    add_executable(lms_tests
+        tests/unit/PenaltyPolicyTest.cpp
+        tests/unit/SubmissionTest.cpp
+        tests/unit/UserTest.cpp
+    )
+    target_link_libraries(lms_tests PRIVATE lms_core GTest::gtest GTest::gtest_main)
+    include(GoogleTest)
+    gtest_discover_tests(lms_tests)
+    message(STATUS "GoogleTest found: building lms_tests")
+else()
+    message(STATUS "GoogleTest not found: lms_tests is skipped")
+endif()
+
 # ---- lms_gui: the Qt desktop program (a second presentation layer) ----
 # Built only when Qt 6 Widgets is installed, so the console program still builds without it.
 find_package(Qt6 COMPONENTS Widgets QUIET)

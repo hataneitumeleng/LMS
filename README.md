@@ -41,6 +41,13 @@ cmake --build build
 - Choose a row in a list (an assignment, a submission, a user), then press the button for what you want to do.
 - Errors are shown in a message box. Release, approve all, deactivate, replace HoD and remove a student ask for confirmation first.
 
+## Tests (Phase 5)
+GoogleTest unit tests are in `tests/`. They build into `lms_tests` when GoogleTest is installed (`mingw-w64-ucrt-x86_64-gtest` or `libgtest-dev`). Run them all with:
+```
+ctest --test-dir build --output-on-failure
+```
+They use a fake clock (`tests/fakes/FakeClock.h`), so they give the same result on any day.
+
 ## Timing test (R12, NFR-01, NFR-02)
 `lms_benchmark` fills `benchmark.db` with 800 students, 20 courses and 20,000 marked submissions, then times login and every list screen against the limits:
 ```
@@ -60,7 +67,7 @@ Every push to GitHub runs `.github/workflows/build.yml`. It builds the program o
 | `src/data` | Data access: Database and the Sqlite repositories |
 | `src/domain` | Domain classes: User, Submission, ... |
 | `sql/schema.sql` | Database schema (Week 3, Appendix B) |
-| `tests` | GoogleTest tests (Phase 5) |
+| `tests` | GoogleTest tests: `unit/` (one file per class), `fakes/` (fake clock) |
 | `tools` | `benchmark.cpp`, the R12 timing test |
 | `docs` | Coding standard, traceability matrix (`RTM.md`) |
 | `.github/workflows` | Automatic build on Ubuntu and Windows |
