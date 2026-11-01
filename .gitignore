@@ -7,3 +7,11 @@ backups/
 build-coverage/
 coverage/
 gui-acceptance/
+# Coverage build and generated reports
+/build-coverage/
+/coverage.html
+/coverage.*.html
+/coverage.css
+/coverage.js
+
+

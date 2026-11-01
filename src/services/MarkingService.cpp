@@ -102,4 +102,23 @@ void MarkingService::save(Submission& submission, std::optional<double> oldFinal
     tx.commit();
 }
 
+
+SubmissionVersion MarkingService::latestFile(int lecturerId, int submissionId) {
+    Submission submission = requireSubmission(submissionId);
+
+    // FR-02: only a lecturer teaching this course can open the file.
+    requireAssignmentTaughtBy(lecturerId, submission.assignmentId);
+
+    // BR-05: use the latest submitted version.
+    std::optional<SubmissionVersion> version =
+        submissions_.latestVersion(submissionId);
+
+    if (!version) {
+        throw ValidationError("This submission has no file");
+    }
+
+    return *version;
+}
+
+
 }  // namespace lms
