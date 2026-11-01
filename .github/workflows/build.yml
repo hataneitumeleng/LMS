@@ -1,4 +1,4 @@
-# Builds the program on every push, on both systems from NFR-10, then runs a
+# Builds both programs (console and Qt desktop) on every push, on both systems from NFR-10, then runs a
 # short start-up test and the R12 timing test.
 name: build
 
@@ -14,11 +14,12 @@ jobs:
       - name: Install tools and libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++ cmake ninja-build pkg-config libsqlite3-dev libsodium-dev libgtest-dev
+          sudo apt-get install -y g++ cmake ninja-build pkg-config libsqlite3-dev libsodium-dev libgtest-dev qt6-base-dev libgl1-mesa-dev
       - name: Build
         run: |
           cmake -S . -B build -G Ninja
           cmake --build build
+          test -f build/lms_gui
       - name: Start-up test (create the admin, log in, log out, exit)
         run: |
           printf 'admin\nSystem Admin\nPassword1\n1\nadmin\nPassword1\n0\n0\n' | ./build/lms | tee run.txt
@@ -45,10 +46,12 @@ jobs:
             mingw-w64-ucrt-x86_64-sqlite3
             mingw-w64-ucrt-x86_64-libsodium
             mingw-w64-ucrt-x86_64-gtest
+            mingw-w64-ucrt-x86_64-qt6-base
       - name: Build
         run: |
           cmake -S . -B build -G Ninja
           cmake --build build
+          test -f build/lms_gui.exe
       - name: Start-up test (create the admin, log in, log out, exit)
         run: |
           printf 'admin\nSystem Admin\nPassword1\n1\nadmin\nPassword1\n0\n0\n' | ./build/lms.exe | tee run.txt

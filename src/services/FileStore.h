@@ -15,6 +15,9 @@ public:
     void validate(const std::string& path) const;
     // Copies the file to "<folder>/sub<id>_v<version><extension>" and returns that path.
     std::string copyIn(const std::string& path, int submissionId, int versionNo) const;
+    // FR-24: copies a lecturer's brief to "<folder>/brief<id>_<n><extension>", using the
+    // first n not taken, so a replaced brief never overwrites the old file. Returns the path.
+    std::string copyBrief(const std::string& path, int assignmentId) const;
     // Deletes a copy. Never throws, because it is called while handling another error.
     void remove(const std::string& storedPath) const noexcept;
     // Deletes files in the folder that the database doesn't know about, for example

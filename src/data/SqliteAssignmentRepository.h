@@ -15,9 +15,11 @@ public:
 
     std::optional<Extension> findExtension(int assignmentId, int studentId) override;
     void saveExtension(const Extension& extension) override;
+    std::vector<std::string> allBriefPaths() override;
 
 private:
     static Assignment readAssignment(const Statement& row);
+    static void bindBrief(Statement& stmt, int index, const std::string& path);
 
     Database& db_;
 };

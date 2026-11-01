@@ -46,7 +46,8 @@ CREATE TABLE assignment (
   description TEXT,
   deadline    TEXT NOT NULL,                  -- ISO 8601, local school time
   max_mark    INTEGER NOT NULL CHECK (max_mark BETWEEN 1 AND 100),
-  created_by  INTEGER NOT NULL REFERENCES user(id)
+  created_by  INTEGER NOT NULL REFERENCES user(id),
+  brief_path  TEXT                            -- optional brief file (FR-24), NULL when none
 );
 
 CREATE TABLE extension (

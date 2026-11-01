@@ -10,7 +10,7 @@ std::string HodMenu::title() const { return "Head of Department menu: " + user_.
 std::vector<std::string> HodMenu::options() const {
     return {"View assignments in my department", "View marked work for an assignment",
             "Approve all marks for an assignment", "Adjust a mark", "Release an assignment's marks",
-            "View the audit trail", "Change my password"};
+            "View the audit trail", "Show a submitted file", "Change my password"};
 }
 
 void HodMenu::handle(int choice) {
@@ -21,7 +21,10 @@ void HodMenu::handle(int choice) {
         case 4: adjustMark(); break;
         case 5: releaseMarks(); break;
         case 6: showAudit(services_.audit.entriesFor(user_)); break;
-        case 7: changePassword(user_); break;
+        case 7:
+            showFile(services_.moderation.latestFile(user_.id(), io_.number("Submission number")));
+            break;
+        case 8: changePassword(user_); break;
     }
 }
 

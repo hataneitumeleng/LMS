@@ -45,6 +45,10 @@ public:
     // FR-15. Refused unless every submission is Moderated. Returns how many were released.
     int release(int hodId, int assignmentId);
 
+    // The latest version of a student's work, so the HoD can check it while moderating.
+    // Only for an assignment in the HoD's own department (FR-02).
+    SubmissionVersion latestFile(int hodId, int submissionId);
+
 private:
     int requireHodDepartment(int hodId);
     Assignment requireAssignmentInDepartment(int hodId, int assignmentId);

@@ -54,6 +54,17 @@ int ModerationService::approveAll(int hodId, int assignmentId) {
     return approved;
 }
 
+SubmissionVersion ModerationService::latestFile(int hodId, int submissionId) {
+    std::optional<Submission> submission = submissions_.findById(submissionId);
+    if (!submission) {
+        throw ValidationError("No submission with id " + std::to_string(submissionId));
+    }
+    requireAssignmentInDepartment(hodId, submission->assignmentId);
+    std::optional<SubmissionVersion> version = submissions_.latestVersion(submissionId);
+    if (!version) throw ValidationError("This submission has no file");
+    return *version;
+}
+
 void ModerationService::adjust(int hodId, int submissionId, double finalMark,
                                const std::string& reason) {
     std::optional<Submission> submission = submissions_.findById(submissionId);

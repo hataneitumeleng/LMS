@@ -19,6 +19,9 @@ public:
     virtual std::optional<Extension> findExtension(int assignmentId, int studentId) = 0;
     // A second extension for the same student replaces the first.
     virtual void saveExtension(const Extension& extension) = 0;
+
+    // Every stored brief file, so start-up clean-up keeps them (FR-24).
+    virtual std::vector<std::string> allBriefPaths() = 0;
 };
 
 }  // namespace lms

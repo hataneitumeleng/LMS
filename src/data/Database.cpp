@@ -35,6 +35,16 @@ void Database::initialiseSchema() {
             throw;
         }
     }
+    upgradeSchema();
+}
+
+void Database::upgradeSchema() {
+    // FR-24 (added after Phase 4): a database made by an older version has no
+    // assignment.brief_path column yet, so add it. Existing rows get NULL (no brief).
+    Statement columns = prepare("SELECT COUNT(*) FROM pragma_table_info('assignment') "
+                                "WHERE name = 'brief_path'");
+    columns.step();
+    if (columns.columnInt(0) == 0) execute("ALTER TABLE assignment ADD COLUMN brief_path TEXT");
 }
 
 Statement Database::prepare(const std::string& sql) {

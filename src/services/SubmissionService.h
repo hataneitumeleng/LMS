@@ -20,6 +20,7 @@ struct StudentAssignmentRow {
     TimePoint effectiveDeadline;
     std::string status;    // what the student may see (BR-07)
     std::string feedback;  // only filled in once released (FR-16)
+    bool hasBrief = false;  // the lecturer attached a brief file (FR-24)
 };
 
 // Student functions: list assignments, submit and resubmit (UC-08, UC-09; FR-09 to FR-11).
@@ -37,6 +38,10 @@ public:
     std::vector<StudentAssignmentRow> listForStudent(int studentId);
 
     // Called at start-up: deletes stored files the database doesn't know about.
+    // FR-24: the path of an assignment's brief file, for a student enrolled in its course.
+    std::string briefFor(int studentId, int assignmentId);
+
+    // Deletes files in the submissions folder that no submission or brief refers to.
     int removeOrphanFiles();
 
 private:

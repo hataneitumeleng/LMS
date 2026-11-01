@@ -1,5 +1,7 @@
 #include "ui/LecturerMenu.h"
 
+#include <filesystem>
+
 namespace lms {
 
 LecturerMenu::LecturerMenu(Console& io, Services& services, const User& user)
@@ -10,6 +12,7 @@ std::string LecturerMenu::title() const { return "Lecturer menu: " + user_.fullN
 std::vector<std::string> LecturerMenu::options() const {
     return {"View my courses and assignments", "Create an assignment", "Grant an extension",
             "View submissions for an assignment", "Mark a submission", "Amend my mark",
+            "Show a submitted file", "Attach or replace an assignment brief",
             "Change my password"};
 }
 
@@ -21,7 +24,11 @@ void LecturerMenu::handle(int choice) {
         case 4: viewSubmissions(); break;
         case 5: markSubmission(); break;
         case 6: amendMark(); break;
-        case 7: changePassword(user_); break;
+        case 7:
+            showFile(services_.marking.latestFile(user_.id(), io_.number("Submission number")));
+            break;
+        case 8: attachBrief(); break;
+        case 9: changePassword(user_); break;
     }
 }
 
@@ -36,6 +43,9 @@ void LecturerMenu::viewCourses() {
         for (const Assignment& a : services_.assignments.assignmentsFor(user_.id(), course.id)) {
             io_.print("      [" + std::to_string(a.id) + "] " + a.title + "  due " +
                       toText(a.deadline) + "  out of " + std::to_string(a.maxMark));
+            if (!a.briefPath.empty()) {
+                io_.print("          Brief: " + std::filesystem::absolute(a.briefPath).string());
+            }
         }
     }
 }
@@ -46,9 +56,21 @@ void LecturerMenu::createAssignment() {
     const std::string description = io_.text("Description (optional)");
     const TimePoint deadline = io_.dateTime("Deadline");
     const int maxMark = io_.number("Maximum mark (1 to 100)");
+    const std::string brief = io_.path("Brief file for students (optional, Enter for none)");
     const int id = services_.assignments.createAssignment(user_.id(), courseId, title, deadline,
                                                           maxMark, description);
     io_.print("Assignment created with number " + std::to_string(id) + ".");
+    if (!brief.empty()) {
+        services_.assignments.attachBrief(user_.id(), id, brief);
+        io_.print("Brief attached.");
+    }
+}
+
+void LecturerMenu::attachBrief() {
+    const int assignmentId = io_.number("Assignment number");
+    const std::string path = io_.path("Full path of the brief file");
+    services_.assignments.attachBrief(user_.id(), assignmentId, path);
+    io_.print("Brief attached. Students see it in their assignment list.");
 }
 
 void LecturerMenu::grantExtension() {

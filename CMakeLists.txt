@@ -23,8 +23,9 @@ configure_file(src/data/Schema.cpp.in ${CMAKE_BINARY_DIR}/generated/Schema.cpp @
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS sql/schema.sql)
 
 # ---- lms_core: domain + services + data layers ----
-# Everything except the console menus goes into one library,
-# so the GoogleTest tests (Phase 5) can link the same code.
+# Everything except the console menus and the Qt windows goes into one library, so both
+# programs and the GoogleTest tests (Phase 5) link the same code. src/app/System.cpp is the
+# composition root that both programs start from.
 add_library(lms_core STATIC
     src/domain/SubmissionStatus.cpp
     src/domain/Role.cpp
@@ -50,6 +51,7 @@ add_library(lms_core STATIC
     src/services/MarkingService.cpp
     src/services/ModerationService.cpp
     src/services/BackupService.cpp
+    src/app/System.cpp
     ${CMAKE_BINARY_DIR}/generated/Schema.cpp
 )
 target_include_directories(lms_core PUBLIC src)
@@ -81,3 +83,30 @@ endif()
 # ---- lms_benchmark: R12 timing test (NFR-01, NFR-02) ----
 add_executable(lms_benchmark tools/benchmark.cpp)
 target_link_libraries(lms_benchmark PRIVATE lms_core)
+
+# ---- lms_gui: the Qt desktop program (a second presentation layer) ----
+# Built only when Qt 6 Widgets is installed, so the console program still builds without it.
+find_package(Qt6 COMPONENTS Widgets QUIET)
+if(Qt6_FOUND)
+    add_executable(lms_gui
+        src/main_gui.cpp
+        src/gui/GuiCommon.cpp
+        src/gui/LoginDialog.cpp
+        src/gui/ChangePasswordDialog.cpp
+        src/gui/RoleWindow.cpp
+        src/gui/StudentWindow.cpp
+        src/gui/LecturerWindow.cpp
+        src/gui/HodWindow.cpp
+        src/gui/AdminWindow.cpp
+        src/gui/GuiApp.cpp
+    )
+    target_link_libraries(lms_gui PRIVATE lms_core Qt6::Widgets)
+    # On Windows: a normal window program, without a black console window behind it.
+    set_target_properties(lms_gui PROPERTIES WIN32_EXECUTABLE ON)
+    if(NOT MSVC)
+        target_compile_options(lms_gui PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+    message(STATUS "Qt ${Qt6_VERSION} found: building lms_gui")
+else()
+    message(STATUS "Qt 6 not found: lms_gui is skipped (the console program lms is built)")
+endif()

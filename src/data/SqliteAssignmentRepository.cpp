@@ -4,8 +4,8 @@ namespace lms {
 
 namespace {
 const char* const kAssignmentColumns =
-    "SELECT id, course_id, title, coalesce(description, ''), deadline, max_mark, created_by "
-    "FROM assignment ";
+    "SELECT id, course_id, title, coalesce(description, ''), deadline, max_mark, created_by, "
+    "coalesce(brief_path, '') FROM assignment ";
 }  // namespace
 
 SqliteAssignmentRepository::SqliteAssignmentRepository(Database& db) : db_(db) {}
@@ -30,24 +30,26 @@ int SqliteAssignmentRepository::save(const Assignment& assignment) {
     if (assignment.id == 0) {
         Statement stmt = db_.prepare(
             "INSERT INTO assignment (course_id, title, description, deadline, max_mark, "
-            "created_by) VALUES (?, ?, ?, ?, ?, ?)");
+            "created_by, brief_path) VALUES (?, ?, ?, ?, ?, ?, ?)");
         stmt.bind(1, assignment.courseId)
             .bind(2, assignment.title)
             .bind(3, assignment.description)
             .bind(4, toText(assignment.deadline))
             .bind(5, assignment.maxMark)
             .bind(6, assignment.createdBy);
+        bindBrief(stmt, 7, assignment.briefPath);
         stmt.step();
         return static_cast<int>(db_.lastInsertId());
     }
     Statement stmt = db_.prepare(
-        "UPDATE assignment SET title = ?, description = ?, deadline = ?, max_mark = ? "
-        "WHERE id = ?");
+        "UPDATE assignment SET title = ?, description = ?, deadline = ?, max_mark = ?, "
+        "brief_path = ? WHERE id = ?");
     stmt.bind(1, assignment.title)
         .bind(2, assignment.description)
         .bind(3, toText(assignment.deadline))
-        .bind(4, assignment.maxMark)
-        .bind(5, assignment.id);
+        .bind(4, assignment.maxMark);
+    bindBrief(stmt, 5, assignment.briefPath);
+    stmt.bind(6, assignment.id);
     stmt.step();
     return assignment.id;
 }
@@ -83,11 +85,26 @@ void SqliteAssignmentRepository::saveExtension(const Extension& extension) {
     stmt.step();
 }
 
+std::vector<std::string> SqliteAssignmentRepository::allBriefPaths() {
+    Statement stmt = db_.prepare("SELECT brief_path FROM assignment WHERE brief_path IS NOT NULL");
+    std::vector<std::string> paths;
+    while (stmt.step()) paths.push_back(stmt.columnText(0));
+    return paths;
+}
+
 Assignment SqliteAssignmentRepository::readAssignment(const Statement& row) {
     return Assignment{row.columnInt(0),  row.columnInt(1),
                       row.columnText(2), row.columnText(3),
                       timeFromText(row.columnText(4)), row.columnInt(5),
-                      row.columnInt(6)};
+                      row.columnInt(6),  row.columnText(7)};
+}
+
+void SqliteAssignmentRepository::bindBrief(Statement& stmt, int index, const std::string& path) {
+    if (path.empty()) {
+        stmt.bindNull(index);  // no brief is stored as NULL, not as ''
+    } else {
+        stmt.bind(index, path);
+    }
 }
 
 }  // namespace lms

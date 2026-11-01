@@ -18,14 +18,16 @@ bool isBlank(const std::string& value) {
 AssignmentService::AssignmentService(Database& db, IAssignmentRepository& assignments,
                                      ICourseRepository& courses, IUserRepository& users,
                                      ISubmissionRepository& submissions,
-                                     const IPenaltyPolicy& policy, const IClock& clock)
+                                     const IPenaltyPolicy& policy, const IClock& clock,
+                                     const FileStore& store)
     : db_(db),
       assignments_(assignments),
       courses_(courses),
       users_(users),
       submissions_(submissions),
       policy_(policy),
-      clock_(clock) {}
+      clock_(clock),
+      store_(store) {}
 
 int AssignmentService::createAssignment(int lecturerId, int courseId, const std::string& title,
                                         TimePoint deadline, int maxMark,
@@ -91,6 +93,25 @@ std::vector<Course> AssignmentService::coursesTaughtBy(int lecturerId) {
 std::vector<Assignment> AssignmentService::assignmentsFor(int lecturerId, int courseId) {
     requireLecturerOf(lecturerId, courseId);
     return assignments_.forCourse(courseId);
+}
+
+void AssignmentService::attachBrief(int lecturerId, int assignmentId, const std::string& path) {
+    Assignment assignment = requireAssignment(assignmentId);
+    requireLecturerOf(lecturerId, assignment.courseId);
+    store_.validate(path);  // the file must exist and not be empty
+
+    const std::string oldBrief = assignment.briefPath;
+    // Like a submission (Figure 6): copy the file, save the row, and delete the copy again
+    // if saving fails, because a rollback can't undo a file copy.
+    const std::string copy = store_.copyBrief(path, assignmentId);
+    try {
+        assignment.briefPath = copy;
+        assignments_.save(assignment);
+    } catch (...) {
+        store_.remove(copy);
+        throw;
+    }
+    if (!oldBrief.empty()) store_.remove(oldBrief);  // only after the new one is saved
 }
 
 void AssignmentService::requireLecturerOf(int lecturerId, int courseId) {

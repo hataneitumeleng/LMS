@@ -31,6 +31,10 @@ public:
     double amend(int lecturerId, int submissionId, double rawMark, const std::string& feedback,
                const std::string& reason);
 
+    // The latest version of a student's work, so the lecturer can open the file before marking
+    // (BR-05: the latest version is the one marked). Only for a lecturer of the course (FR-02).
+    SubmissionVersion latestFile(int lecturerId, int submissionId);
+
 private:
     Submission requireSubmission(int submissionId);
     Assignment requireAssignmentTaughtBy(int lecturerId, int assignmentId);

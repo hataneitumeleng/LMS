@@ -4,13 +4,14 @@
 #include "services/AuditService.h"
 #include "services/AuthService.h"
 #include "services/BackupService.h"
+#include "services/IClock.h"
 #include "services/MarkingService.h"
 #include "services/ModerationService.h"
 #include "services/SubmissionService.h"
 
 namespace lms {
 
-// The services the menus may call. The menus never see a repository or the
+// The services the front ends may call. The menus and windows never see a repository or the
 // database, only these (strict layering, Section 2).
 struct Services {
     AuthService& auth;
@@ -21,6 +22,7 @@ struct Services {
     ModerationService& moderation;
     AuditService& audit;
     BackupService& backup;
+    const IClock& clock;  // "now" for the windows (e.g. time left until a deadline)
 };
 
 }  // namespace lms

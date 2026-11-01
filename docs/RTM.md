@@ -17,9 +17,9 @@ Each requirement is traced from its use case and design element (Week 3, Table 3
 | FR-09 | UC-09 | `SubmissionService::listForStudent()` | `services/SubmissionService.cpp` (`listForStudent`), `domain/Assignment.h` (`effectiveDeadline`), `ui/StudentMenu.cpp` | |
 | FR-10 | UC-10 | SubmissionService, IPenaltyPolicy, IClock, FileStore | `services/SubmissionService.cpp` (`submit`, `firstSubmission`), `services/FileStore.cpp`, `data/SqliteSubmissionRepository.cpp` | |
 | FR-11 | UC-10 | `Submission::canResubmit()` | `services/SubmissionService.cpp` (`resubmission`), `domain/Submission.cpp` (`canResubmit`) | |
-| FR-12 | UC-08 | MarkingService | `services/MarkingService.cpp` (`mark`), `domain/Submission.cpp` (`recordMark`) | |
+| FR-12 | UC-08 | MarkingService | `services/MarkingService.cpp` (`mark`, `latestFile`), `domain/Submission.cpp` (`recordMark`) | |
 | FR-13 | UC-08 | IPenaltyPolicy, TenPercentPerDayPolicy | `services/IPenaltyPolicy.h`, `services/TenPercentPerDayPolicy.cpp` | |
-| FR-14 | UC-12 | ModerationService | `services/ModerationService.cpp` (`listForModeration`, `approveAll`, `adjust`), `domain/Submission.cpp` (`moderate`), `ui/HodMenu.cpp` | |
+| FR-14 | UC-12 | ModerationService | `services/ModerationService.cpp` (`listForModeration`, `approveAll`, `adjust`, `latestFile`), `domain/Submission.cpp` (`moderate`), `ui/HodMenu.cpp` | |
 | FR-15 | UC-13 | `ModerationService::release()` | `services/ModerationService.cpp` (`release`), `data/SqliteSubmissionRepository.cpp` (`countNotModerated`), `domain/Submission.cpp` (`release`) | |
 | FR-16 | UC-11 | `SubmissionService::releasedResults()` | Implemented inside `SubmissionService::listForStudent` (`statusForStudent`; feedback only when Released) | |
 | FR-17 | UC-08, UC-12, UC-14 | AuditService, IAuditRepository | `services/AuditService.cpp`, `data/SqliteAuditRepository.cpp`, `domain/AuditEntry.h`, `ui/Menu.cpp` (`showAudit`) | |
@@ -29,6 +29,7 @@ Each requirement is traced from its use case and design element (Week 3, Table 3
 | FR-21 | UC-13 | Deferred from v1.0 | – | – |
 | FR-22 | UC-11 | Deferred from v1.0 | – | – |
 | FR-23 | – | Won't (CR1 in Phase 8) | – | – |
+| FR-24 | UC-06, UC-09 | Added after Phase 4: assignment brief file | `services/AssignmentService.cpp` (`attachBrief`), `services/FileStore.cpp` (`copyBrief`), `services/SubmissionService.cpp` (`briefFor`, `removeOrphanFiles`), `data/Database.cpp` (`upgradeSchema`), `data/SqliteAssignmentRepository.cpp` (`brief_path`), `ui/LecturerMenu.cpp`, `ui/StudentMenu.cpp`, `gui/LecturerWindow.cpp`, `gui/StudentWindow.cpp` | |
 
 ## Business rules
 
@@ -51,9 +52,23 @@ Each requirement is traced from its use case and design element (Week 3, Table 3
 | NFR-03 | `services/Argon2Hasher.cpp` (libsodium Argon2id) |
 | NFR-04 | `domain/User.cpp` (`recordFailedLogin`, `isLocked`), `services/AuthService.cpp` (`checkPasswordRules`) |
 | NFR-05 | No network code; SQLite file database (`data/Database.cpp`) |
-| NFR-06 | `ui/Menu.cpp` (`kMaxOptions`), `ui/Console.cpp` (`confirm`), confirmations in `ui/HodMenu.cpp` and `ui/AdminMenu.cpp` |
-| NFR-07 | `ui/Menu.cpp` (`run` catches every exception), `ui/Console.cpp` (re-asking reads), `data/Transaction.h`, `services/SubmissionService.cpp` (file clean-up) |
+| NFR-06 | `ui/Menu.cpp` (`kMaxOptions`), `ui/Console.cpp` (`confirm`), confirmations in `ui/HodMenu.cpp` and `ui/AdminMenu.cpp`; desktop: `gui/GuiCommon.cpp` (`confirm`) in `gui/HodWindow.cpp` and `gui/AdminWindow.cpp` |
+| NFR-07 | `ui/Menu.cpp` (`run` catches every exception), `gui/GuiCommon.cpp` (`runAction`), `ui/Console.cpp` (re-asking reads), `data/Transaction.h`, `services/SubmissionService.cpp` (file clean-up) |
 | NFR-08 | `services/MarkingService.cpp` (`save`), `services/ModerationService.cpp` (`adjust`): mark and audit in one `Transaction` |
 | NFR-09 | Phase 5 (GoogleTest, `tests/`) |
 | NFR-10 | `CMakeLists.txt`, `.github/workflows/build.yml` (Ubuntu 22.04 and Windows) |
 | NFR-11 | `services/BackupService.cpp` (`VACUUM INTO` + copy of submitted files) |
+
+## Desktop GUI (`lms_gui`)
+
+The Qt program calls the same services as the console, so every row above stays the same. Only the presentation files differ:
+
+| Console (`src/ui`) | Desktop (`src/gui`) | Requirements |
+|---|---|---|
+| `LoginMenu` (`menuFor`), `App` | `LoginDialog`, `FirstAdminDialog`, `GuiApp` (`windowFor`) | FR-01, FR-02 |
+| `StudentMenu` | `StudentWindow` | FR-09, FR-10, FR-11, FR-16 |
+| `LecturerMenu` | `LecturerWindow` | FR-07, FR-08, FR-12, FR-18 |
+| `HodMenu` | `HodWindow`, `AuditPage` | FR-14, FR-15, FR-17 |
+| `AdminMenu`, `AdminUsersMenu`, `AdminCoursesMenu` | `AdminWindow`, `AuditPage` | FR-03 to FR-06, FR-17, FR-20 |
+| `Menu::changePassword` | `ChangePasswordDialog` | FR-19 |
+| `Menu::run` | `RoleWindow`, `runAction` | NFR-06, NFR-07 |

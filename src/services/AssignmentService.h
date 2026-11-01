@@ -4,6 +4,7 @@
 #include "data/ICourseRepository.h"
 #include "data/ISubmissionRepository.h"
 #include "data/IUserRepository.h"
+#include "services/FileStore.h"
 #include "services/IClock.h"
 #include "services/IPenaltyPolicy.h"
 
@@ -19,7 +20,7 @@ public:
     AssignmentService(Database& db, IAssignmentRepository& assignments,
                       ICourseRepository& courses, IUserRepository& users,
                       ISubmissionRepository& submissions, const IPenaltyPolicy& policy,
-                      const IClock& clock);
+                      const IClock& clock, const FileStore& store);
 
     // FR-07. The deadline must be in the future and the max mark 1 to 100.
     int createAssignment(int lecturerId, int courseId, const std::string& title,
@@ -33,6 +34,10 @@ public:
                         const std::string& reason);
 
     // Read-only lists for the lecturer menu.
+    // FR-24: attaches a brief file (instructions, a template...) to an assignment, or
+    // replaces the old one. Only a lecturer of the course may do it.
+    void attachBrief(int lecturerId, int assignmentId, const std::string& path);
+
     std::vector<Course> coursesTaughtBy(int lecturerId);
     std::vector<Assignment> assignmentsFor(int lecturerId, int courseId);
 
@@ -47,6 +52,7 @@ private:
     ISubmissionRepository& submissions_;
     const IPenaltyPolicy& policy_;
     const IClock& clock_;
+    const FileStore& store_;
 };
 
 }  // namespace lms

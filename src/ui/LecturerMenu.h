@@ -20,6 +20,7 @@ private:
     void viewSubmissions();
     void markSubmission();
     void amendMark();
+    void attachBrief();
 
     const User& user_;
 };

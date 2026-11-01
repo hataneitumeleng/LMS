@@ -2,7 +2,8 @@
 #include "domain/AuditEntry.h"
 #include "domain/User.h"
 #include "ui/Console.h"
-#include "ui/Services.h"
+#include "app/Services.h"
+#include "domain/SubmissionVersion.h"
 
 #include <string>
 #include <vector>
@@ -31,6 +32,8 @@ protected:
     // Shared screens used by more than one menu.
     void changePassword(const User& user);  // FR-19
     void showAudit(const std::vector<AuditEntry>& entries);
+    // Prints where a submitted file is, so it can be opened (e.g. Ctrl+click in VS Code).
+    void showFile(const SubmissionVersion& version);
 
     Console& io_;
     Services& services_;

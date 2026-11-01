@@ -96,7 +96,8 @@ std::vector<StudentAssignmentRow> SubmissionService::listForStudent(int studentI
                 a.effectiveDeadline(assignments_.findExtension(a.id, studentId));
             const std::optional<Submission> submission = submissions_.findCurrent(studentId, a.id);
             StudentAssignmentRow row{course.code, a.id, a.title, deadline,
-                                     statusForStudent(submission, a.maxMark), ""};
+                                     statusForStudent(submission, a.maxMark), "",
+                                     !a.briefPath.empty()};
             if (submission && submission->status == SubmissionStatus::Released) {
                 row.feedback = submission->feedback;
             }
@@ -106,8 +107,26 @@ std::vector<StudentAssignmentRow> SubmissionService::listForStudent(int studentI
     return rows;
 }
 
+std::string SubmissionService::briefFor(int studentId, int assignmentId) {
+    const std::optional<Assignment> assignment = assignments_.find(assignmentId);
+    if (!assignment) {
+        throw ValidationError("No assignment with id " + std::to_string(assignmentId));
+    }
+    // FR-02: only students of the course see its brief
+    if (!courses_.isEnrolled(assignment->courseId, studentId)) {
+        throw AuthError("You are not enrolled in this course");
+    }
+    if (assignment->briefPath.empty()) {
+        throw ValidationError("The lecturer did not attach a file to this assignment");
+    }
+    return assignment->briefPath;
+}
+
 int SubmissionService::removeOrphanFiles() {
-    return store_.removeOrphans(submissions_.allFilePaths());
+    std::vector<std::string> known = submissions_.allFilePaths();
+    const std::vector<std::string> briefs = assignments_.allBriefPaths();
+    known.insert(known.end(), briefs.begin(), briefs.end());
+    return store_.removeOrphans(known);
 }
 
 std::string SubmissionService::statusForStudent(const std::optional<Submission>& submission,

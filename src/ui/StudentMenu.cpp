@@ -1,5 +1,7 @@
 #include "ui/StudentMenu.h"
 
+#include <filesystem>
+
 namespace lms {
 
 StudentMenu::StudentMenu(Console& io, Services& services, const User& user)
@@ -29,6 +31,10 @@ void StudentMenu::viewAssignments() {
     for (const auto& row : rows) {
         io_.print("[" + std::to_string(row.assignmentId) + "] " + row.courseCode + "  " +
                   row.title + "  due " + toText(row.effectiveDeadline) + "  " + row.status);
+        if (row.hasBrief) {
+            const std::string brief = services_.submissions.briefFor(user_.id(), row.assignmentId);
+            io_.print("      Brief: " + std::filesystem::absolute(brief).string());
+        }
         if (!row.feedback.empty()) io_.print("      Feedback: " + row.feedback);
     }
 }

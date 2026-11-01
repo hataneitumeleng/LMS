@@ -35,6 +35,8 @@ public:
 private:
     // For fixed SQL written in the program only, never for user input.
     void execute(const std::string& sql);
+    // Brings a database made by an older version of the program up to date.
+    void upgradeSchema();
 
     sqlite3* db_ = nullptr;
 };

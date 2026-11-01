@@ -23,6 +23,18 @@ void FileStore::validate(const std::string& path) const {
     }
 }
 
+std::string FileStore::copyBrief(const std::string& path, int assignmentId) const {
+    const std::string extension = fs::path(path).extension().string();
+    fs::path target;
+    for (int n = 1;; ++n) {
+        target = fs::path(folder_) /
+                 ("brief" + std::to_string(assignmentId) + "_" + std::to_string(n) + extension);
+        if (!fs::exists(target)) break;
+    }
+    fs::copy_file(path, target);
+    return target.generic_string();
+}
+
 std::string FileStore::copyIn(const std::string& path, int submissionId, int versionNo) const {
     const fs::path target = fs::path(folder_) / ("sub" + std::to_string(submissionId) + "_v" +
                                                  std::to_string(versionNo) +

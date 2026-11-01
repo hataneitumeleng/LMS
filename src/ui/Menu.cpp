@@ -3,6 +3,7 @@
 #include "data/DatabaseError.h"
 #include "domain/Errors.h"
 
+#include <filesystem>
 #include <stdexcept>
 
 namespace lms {
@@ -60,6 +61,12 @@ void Menu::showAudit(const std::vector<AuditEntry>& entries) {
                   std::to_string(e.submissionId) + "  " + formatMark(e.oldValue) + " -> " +
                   formatMark(e.newValue) + "  \"" + e.reason + "\"");
     }
+}
+
+void Menu::showFile(const SubmissionVersion& version) {
+    io_.print("Version " + std::to_string(version.versionNo) + ", submitted " +
+              toText(version.submittedAt));
+    io_.print("File: " + std::filesystem::absolute(version.filePath).string());
 }
 
 }  // namespace lms
