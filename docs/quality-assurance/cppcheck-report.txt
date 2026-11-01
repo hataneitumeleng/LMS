@@ -1,0 +1,9 @@
+src\gui\AdminWindow.cpp:265:89: warning: Consider using std::find_if algorithm instead of a raw loop. [useStlAlgorithm]
+        if (u->role() == Role::HoD && u->active() && u->departmentId() == departmentId) {
+                                                                                        ^
+src\services\ModerationService.cpp:38:32: warning: Consider using std::copy_if algorithm instead of a raw loop. [useStlAlgorithm]
+        if (!s.isOpen()) marked.push_back(s);
+                               ^
+src\services\SubmissionService.cpp:146:20: warning: Ineffective call of function 'substr' because a prefix of the string is assigned to itself. Use resize() or pop_back() instead. [uselessCallsSubstr]
+            mark = mark.substr(0, mark.find('.') + 2);  // one decimal place
+                   ^
