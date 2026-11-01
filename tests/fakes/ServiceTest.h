@@ -1,5 +1,6 @@
 #pragma once
 #include "FakeAssignmentRepository.h"
+#include "FakeAuditRepository.h"
 #include "FakeClock.h"
 #include "FakeCourseRepository.h"
 #include "FakePasswordHasher.h"
@@ -7,9 +8,13 @@
 #include "FakeUserRepository.h"
 #include "data/Database.h"
 #include "domain/UserFactory.h"
+#include "services/AdminService.h"
 #include "services/AssignmentService.h"
+#include "services/AuditService.h"
 #include "services/AuthService.h"
 #include "services/FileStore.h"
+#include "services/MarkingService.h"
+#include "services/ModerationService.h"
 #include "services/SubmissionService.h"
 #include "services/TenPercentPerDayPolicy.h"
 
@@ -30,7 +35,8 @@ namespace lms::test {
 //
 // Each test starts at 24 Oct 2026 09:00 with: lecturer thabo teaching CS101, students itu
 // and neo enrolled in it, lerato (a lecturer, not of CS101) and sipho (a student, not
-// enrolled), and Project 1 due 30 Oct 17:00 out of 100.
+// enrolled), and Project 1 due 30 Oct 17:00 out of 100. mpho is the HoD of Science (the
+// department of CS101) and admin is the administrator.
 class ServiceTest : public ::testing::Test {
 protected:
     ServiceTest()
@@ -47,6 +53,8 @@ protected:
         courses.addLecturer(cs101, thabo);
         courses.addEnrolment(cs101, itu);
         courses.addEnrolment(cs101, neo);
+        mpho = addUser(Role::HoD, "mpho", science);
+        admin = addUser(Role::Administrator, "admin");
         project1 = assignmentService.createAssignment(thabo, cs101, "Project 1",
                                                       at("2026-10-30 17:00:00"), 100);
     }
@@ -105,14 +113,21 @@ protected:
     FakeCourseRepository courses;
     FakeAssignmentRepository assignments;
     FakeSubmissionRepository submissions;
+    FakeAuditRepository auditLog{submissions, assignments, courses};
+    UserFactory factory;
 
     AuthService auth{users, hasher, clock};
     AssignmentService assignmentService{db,          assignments, courses, users,
                                         submissions, policy,      clock,   store};
     SubmissionService submissionService{db, submissions, assignments, courses,
                                         policy, clock, store};
+    AuditService auditService{auditLog, clock};
+    MarkingService markingService{db, submissions, assignments, courses, policy, auditService};
+    ModerationService moderationService{db,    submissions,  assignments, courses,
+                                        users, auditService, clock};
+    AdminService adminService{db, users, courses, factory, hasher};
 
-    int thabo = 0, lerato = 0, itu = 0, neo = 0, sipho = 0;
+    int thabo = 0, lerato = 0, itu = 0, neo = 0, sipho = 0, mpho = 0, admin = 0;
     int science = 0, cs101 = 0, project1 = 0;
 };
 
