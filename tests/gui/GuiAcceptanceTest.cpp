@@ -207,11 +207,20 @@ int main(int argc, char** argv) {
         pick(w, "extensionAssignment", "Project 1");
         get<QSpinBox>(w, "student")->setValue(4);
         set(w, "extensionReason", "Medical");
-        get<QDateTimeEdit>(w, "newDeadline")->setDateTime(QDateTime::currentDateTime().addDays(30));
+       const QDateTime originalDeadline =
+    QDateTime::currentDateTime().addDays(5);
+
+    get<QDateTimeEdit>(w, "newDeadline")->setDateTime(
+    originalDeadline.addDays(15));
         click(w, "grant"); note(last()); CHECK(last().contains("14 days"));
-        get<QDateTimeEdit>(w, "newDeadline")->setDateTime(QDateTime::currentDateTime().addDays(8));
-        click(w, "grant"); note(last()); CHECK(last().startsWith("INFO"));
-        end("Lecturer grants an extension; more than 14 days is refused");
+        get<QDateTimeEdit>(w, "newDeadline")->setDateTime(
+    originalDeadline.addDays(3));
+
+set(w, "extensionReason", "Medical");
+
+click(w, "grant");
+note(last());
+CHECK(last().startsWith("INFO"));
 
         begin("GT-10");
         tab(w, 2);
