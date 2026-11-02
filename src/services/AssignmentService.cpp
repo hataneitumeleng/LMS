@@ -95,6 +95,62 @@ std::vector<Assignment> AssignmentService::assignmentsFor(int lecturerId, int co
     return assignments_.forCourse(courseId);
 }
 
+void AssignmentService::extendClassDeadline(
+    int lecturerId,
+    int assignmentId,
+    TimePoint newDeadline,
+    const std::string& reason)
+{
+    Assignment assignment = requireAssignment(assignmentId);
+
+    // Only the lecturer teaching this course may extend its deadline.
+    requireLecturerOf(lecturerId, assignment.courseId);
+
+    // The new deadline must be later than the current deadline.
+    if (newDeadline <= assignment.deadline) {
+        throw ValidationError("The new deadline must be later than the current deadline");
+    }
+
+    // An extension cannot exceed 14 days.
+    if (newDeadline > assignment.deadline + std::chrono::hours(24 * 14)) {
+        throw ValidationError("An extension can be at most 14 days");
+    }
+
+    if (isBlank(reason)) {
+        throw ValidationError("A reason is required");
+    }
+
+   // Update the main deadline for the entire class.
+assignment.deadline = newDeadline;
+
+Transaction tx(db_);
+assignments_.save(assignment);
+
+// Recalculate lateness for existing open submissions.
+for (Submission submission : submissions_.findByAssignment(assignmentId)) {
+    if (!submission.isOpen()) {
+        continue; // Do not change marked, moderated or released work.
+    }
+
+    const auto version = submissions_.latestVersion(submission.id);
+    if (!version) {
+        continue;
+    }
+
+    const TimePoint effectiveDeadline =
+        assignment.effectiveDeadline(
+            assignments_.findExtension(assignmentId, submission.studentId));
+
+    const int daysLate =
+        policy_.daysLate(version->submittedAt, effectiveDeadline);
+
+    submission.setLateness(daysLate);
+    submissions_.save(submission);
+}
+
+tx.commit();
+}
+
 void AssignmentService::attachBrief(int lecturerId, int assignmentId, const std::string& path) {
     Assignment assignment = requireAssignment(assignmentId);
     requireLecturerOf(lecturerId, assignment.courseId);

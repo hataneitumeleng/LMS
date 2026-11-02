@@ -213,11 +213,35 @@ QWidget* LecturerWindow::buildExtensionsPage() {
     extensionReason_ = new QLineEdit;
     extensionReason_->setObjectName("extensionReason");
     QPushButton* grant = makeButton("Grant extension", "grant");
+    QPushButton* grantClass = makeButton("Extend deadline for whole class", "grantClass");
     form->addRow("Assignment", extensionAssignment_);
     form->addRow("Student number", student_);
     form->addRow("New deadline", newDeadline_);
     form->addRow("Reason", extensionReason_);
     form->addRow(grant);
+    form->addRow(grantClass);
+    connect(grant, &QPushButton::clicked, this, [this] { grantExtension(); });
+    connect(grantClass, &QPushButton::clicked, this, [this] {
+    const auto assignmentId = comboId(extensionAssignment_);
+
+    if (!assignmentId) {
+        showError(this, "You have no assignments yet.");
+        return;
+    }
+
+    runAction(this, [&] {
+        services_.assignments.extendClassDeadline(
+            user().id(),
+            *assignmentId,
+            fromQt(newDeadline_->dateTime()),
+            str(extensionReason_->text())
+        );
+
+        showInfo(this, "Deadline extended for the whole class.");
+        extensionReason_->clear();
+        refreshAssignments();
+    });
+});
     layout->addLayout(form);
     layout->addStretch();
 
