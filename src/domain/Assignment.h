@@ -20,8 +20,11 @@ struct Assignment {
 
     // The deadline that applies to one student: their extension if they have one,
     // otherwise the normal deadline (BR-03).
-    TimePoint effectiveDeadline(const std::optional<Extension>& extension) const {
-        return extension ? extension->newDeadline : deadline;
+   TimePoint effectiveDeadline(const std::optional<Extension>& extension) const {
+        if (extension && extension->newDeadline > deadline) {
+        return extension->newDeadline;
+        }
+    return deadline;
     }
 };
 

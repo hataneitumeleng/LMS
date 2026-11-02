@@ -192,6 +192,44 @@ TEST_F(AssignmentServiceTest, FailedSaveDeletesTheCopiedBrief) {  // like Figure
     EXPECT_EQ(filesStored(), 0);
     EXPECT_TRUE(assignments.find(project1)->briefPath.empty());
 }
+TEST_F(AssignmentServiceTest, ClassWideExtensionUpdatesDeadline) {
+    const TimePoint newDeadline = kDue + hours(48);
+
+    assignmentService.extendClassDeadline(
+        thabo, project1, newDeadline, "More time for the class");
+
+    const auto updated = assignments.find(project1);
+
+    ASSERT_TRUE(updated.has_value());
+    EXPECT_EQ(updated->deadline, newDeadline);
+}
+
+TEST_F(AssignmentServiceTest, ClassWideExtensionPreservesIndividualExtension) {
+    const TimePoint individualDeadline = kDue + hours(144);
+    const TimePoint classDeadline = kDue + hours(96);
+
+    // Grant an individual extension first.
+    assignmentService.grantExtension(
+        thabo, project1, itu,
+        individualDeadline, "Medical reasons");
+
+    // Extend the deadline for the entire class.
+    assignmentService.extendClassDeadline(
+        thabo, project1, classDeadline,
+        "Additional time for everyone");
+
+    // The student's individual extension must remain unchanged.
+    const auto extension = assignments.findExtension(project1, itu);
+
+    ASSERT_TRUE(extension.has_value());
+    EXPECT_EQ(extension->newDeadline, individualDeadline);
+
+    // The class deadline must also be updated.
+    const auto assignment = assignments.find(project1);
+
+    ASSERT_TRUE(assignment.has_value());
+    EXPECT_EQ(assignment->deadline, classDeadline);
+}
 
 }  // namespace
 }  // namespace lms::test

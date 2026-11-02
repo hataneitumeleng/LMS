@@ -223,5 +223,63 @@ TEST_F(SubmissionServiceTest, RemoveOrphanFilesKeepsKnownFilesOnly) {
     EXPECT_TRUE(std::filesystem::exists(submissionService.briefFor(itu, project1)));
 }
 
+TEST_F(SubmissionServiceTest, ClassWideExtensionRecalculatesLateSubmission) {
+    // Submit one day after the original deadline.
+    const Submission original = submitAt("2026-10-31 12:00:00");
+
+    ASSERT_EQ(original.status, SubmissionStatus::Late);
+    EXPECT_GT(original.daysLate, 0);
+
+    // Extend the deadline for the entire class.
+    const TimePoint newDeadline = at("2026-11-03 17:00:00");
+
+    assignmentService.extendClassDeadline(
+        thabo, project1, newDeadline, "Class-wide extension");
+
+    // Reload the submission to check the stored changes.
+    const auto updated = submissions.findById(original.id);
+
+    ASSERT_TRUE(updated.has_value());
+    EXPECT_EQ(updated->status, SubmissionStatus::Submitted);
+    EXPECT_EQ(updated->daysLate, 0);
+
+    // The submission file history must remain intact.
+    const auto version = submissions.latestVersion(original.id);
+    ASSERT_TRUE(version.has_value());
+    EXPECT_EQ(version->versionNo, 1);
+}
+
+TEST_F(SubmissionServiceTest, ClassWideExtensionPreservesMarkedSubmission) {
+    // Submit after the original deadline.
+    const Submission original = submitAt("2026-10-31 12:00:00");
+
+    ASSERT_EQ(original.status, SubmissionStatus::Late);
+
+    // Mark the submission before extending the deadline.
+    markIt(original.id, 75.0, "Good work");
+
+    const auto before = submissions.findById(original.id);
+    ASSERT_TRUE(before.has_value());
+    ASSERT_EQ(before->status, SubmissionStatus::Marked);
+
+    // Extend the class deadline.
+    assignmentService.extendClassDeadline(
+        thabo,
+        project1,
+        at("2026-11-03 17:00:00"),
+        "Class-wide extension");
+
+    // Reload the marked submission.
+    const auto after = submissions.findById(original.id);
+    ASSERT_TRUE(after.has_value());
+
+    // Existing marking information must remain unchanged.
+    EXPECT_EQ(after->status, SubmissionStatus::Marked);
+    EXPECT_EQ(after->rawMark, before->rawMark);
+    EXPECT_EQ(after->finalMark, before->finalMark);
+    EXPECT_EQ(after->feedback, before->feedback);
+    EXPECT_EQ(after->daysLate, before->daysLate);
+}
+
 }  // namespace
 }  // namespace lms::test

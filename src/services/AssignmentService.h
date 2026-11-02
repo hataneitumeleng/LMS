@@ -32,7 +32,10 @@ public:
     // worked out again against the new deadline (BR-04).
     void grantExtension(int lecturerId, int assignmentId, int studentId, TimePoint newDeadline,
                         const std::string& reason);
-
+                        
+    // Phase 8 CR1: Extend the deadline for the whole class.
+    void extendClassDeadline(int lecturerId, int assignmentId,
+                         TimePoint newDeadline, const std::string& reason);    
     // Read-only lists for the lecturer menu.
     // FR-24: attaches a brief file (instructions, a template...) to an assignment, or
     // replaces the old one. Only a lecturer of the course may do it.
