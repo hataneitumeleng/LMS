@@ -1,0 +1,65 @@
+@startuml
+!include common.iuml
+skinparam defaultFontSize 11
+skinparam sequenceMessageAlign left
+hide footbox
+actor Student
+participant ":StudentMenu" as M
+participant ":SubmissionService" as S
+participant ":FileStore" as F
+participant ":IAssignmentRepository" as A
+participant ":ISubmissionRepository" as R
+participant ":IPenaltyPolicy" as P
+participant ":IClock" as C
+participant ":Database" as D
+
+Student -> M : choose "Submit work", enter path
+M -> S : submit(studentId, assignmentId, path)
+activate S
+S -> F : validate(path)
+note right of F : file missing or > 10 MB:\nerror shown, nothing saved (UC-10 3a)
+S -> A : find(assignmentId)
+S -> A : findExtension(assignmentId, studentId)
+S -> S : deadline = assignment.effectiveDeadline(ext)
+S -> C : now()
+C --> S : t
+S -> R : findCurrent(studentId, assignmentId)
+R --> S : existing : optional<Submission>
+alt existing and (t > deadline or status is Marked, Moderated or Released)
+  S --> M : throw ResubmissionRefused (BR-06)
+  M --> Student : explain why resubmission is refused
+else existing and t <= deadline and status is Submitted (resubmission, BR-05)
+  S -> D : begin()
+  S -> F : copyIn(path, subId, versionNo + 1)
+  F --> S : storedPath
+  S -> R : addVersion(subId, v)
+  S -> D : commit()
+  M <-- S : new version recorded
+  M --> Student : confirmation with time recorded
+else no earlier submission
+  S -> P : daysLate(t, deadline)
+  P --> S : d
+  alt d == 0 (on time)
+    S -> S : status = Submitted
+  else d > 0 (late path, BR-02)
+    S -> S : status = Late, daysLate = d
+  end
+  S -> D : begin()
+  S -> R : save(submission)
+  R --> S : subId
+  S -> F : copyIn(path, subId, 1)
+  F --> S : storedPath
+  S -> R : addVersion(subId, v1)
+  S -> D : commit()
+  M <-- S : submission (status, daysLate)
+  M --> Student : confirmation, with late warning if Late
+end
+deactivate S
+break failure in any step between begin() and commit() (NFR-07)
+  S -> D : rollback()
+  S -> F : remove(storedPath) [only if the file was copied]
+  S --> M : error
+  M --> Student : error message, previous state kept
+end
+note over S, D : The database rollback does not undo file operations, so the copied file is\ndeleted by SubmissionService (compensation). If the program stops before\ncleanup, FileStore.removeOrphans() deletes unreferenced files at next start-up.
+@enduml

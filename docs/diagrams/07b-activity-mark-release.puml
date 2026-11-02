@@ -1,0 +1,62 @@
+@startuml
+!include common.iuml
+skinparam defaultFontSize 12
+skinparam ActivityFontSize 12
+|Lecturer|
+|System|
+|HoD|
+|Student|
+|Lecturer|
+start
+:Submissions are\nSubmitted or Late\n(Figure 5a);
+repeat :Select next Submitted\nor Late submission;
+  repeat :Enter raw mark\nand feedback;
+  |System|
+  repeat while (Mark in range and\nfeedback given?) is (no: error)
+  ->yes;
+  if (Late?) then (yes)
+    :Apply penalty
+    (BR-01);
+  else (no)
+    :final = raw;
+  endif
+  :Save mark, Marked,
+  audit entry (FR-17)
+  in one transaction;
+|Lecturer|
+repeat while (More to mark?) is (yes)
+->no;
+|HoD|
+repeat :Review next\nMarked submission;
+  if (Acceptable?) then (yes)
+    |System|
+    :Moderated,
+    record HoD and time;
+  else (no)
+    |HoD|
+    :Enter new final
+    mark and reason;
+    |System|
+    :Save mark, Moderated,
+    audit entry (BR-08)
+    in one transaction;
+  endif
+|HoD|
+repeat while (Marked submissions\nleft?) is (yes)
+->no;
+:Choose "Release";
+|System|
+if (Every submission\nModerated?) then (yes)
+  :All set to
+  Released;
+else (no)
+  :Refuse, show
+  how many remain
+  (FR-15);
+  stop
+endif
+|Student|
+:View final mark
+and feedback;
+stop
+@enduml

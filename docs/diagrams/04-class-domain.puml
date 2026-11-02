@@ -1,0 +1,113 @@
+@startuml
+!include common.iuml
+skinparam linetype polyline
+skinparam nodesep 30
+skinparam ranksep 40
+hide empty members
+enum Role <<enumeration>> {
+  Student
+  Lecturer
+  HoD
+  Administrator
+}
+enum SubmissionStatus <<enumeration>> {
+  Submitted
+  Late
+  Marked
+  Moderated
+  Released
+}
+abstract class User {
+  - id : int
+  - username : string
+  - passwordHash : string
+  - fullName : string
+  - active : bool
+  - failedAttempts : int
+  - lockedUntil : optional<time_point>
+  + {abstract} role() : Role
+  + isLocked(now : time_point) : bool
+}
+class Student {
+  + role() : Role
+}
+class Lecturer {
+  + role() : Role
+}
+class HeadOfDepartment {
+  - departmentId : int
+  + role() : Role
+}
+class Administrator {
+  + role() : Role
+}
+class Department {
+  - id : int
+  - name : string
+}
+class Course {
+  - id : int
+  - code : string
+  - title : string
+  - departmentId : int
+}
+class Assignment {
+  - id : int
+  - courseId : int
+  - title : string
+  - description : string
+  - deadline : time_point
+  - maxMark : int
+  + effectiveDeadline(ext : optional<Extension>) : time_point
+}
+class Extension {
+  - studentId : int
+  - assignmentId : int
+  - newDeadline : time_point
+  - reason : string
+  - grantedBy : int
+}
+class Submission {
+  - id : int
+  - status : SubmissionStatus
+  - daysLate : int
+  - rawMark : optional<double>
+  - finalMark : optional<double>
+  - feedback : string
+  + currentVersion() : SubmissionVersion
+  + canResubmit(now, deadline) : bool
+  + recordMark(raw, final, feedback) : void
+  + moderate(finalMark : double) : void
+  + release() : void
+}
+class SubmissionVersion {
+  - versionNo : int
+  - filePath : string
+  - submittedAt : time_point
+}
+class AuditEntry {
+  - id : int
+  - userId : int
+  - changedAt : time_point
+  - oldValue : optional<double>
+  - newValue : double
+  - reason : string
+}
+User <|-- Student
+User <|-- Lecturer
+User <|-- HeadOfDepartment
+User <|-- Administrator
+User ..> Role
+Department "1" -- "1" HeadOfDepartment : headed by <
+Department "1" *-- "1..*" Course
+Course "*" -- "1..*" Lecturer : taught by >
+Course "*" -- "*" Student : enrols >
+Course "1" *-- "*" Assignment
+Assignment "1" -- "*" Extension
+Student "1" -- "*" Extension
+Assignment "1" -- "*" Submission
+Student "1" -- "*" Submission
+Submission "1" *-- "1..*" SubmissionVersion
+Submission "1" -- "*" AuditEntry
+Submission ..> SubmissionStatus
+@enduml

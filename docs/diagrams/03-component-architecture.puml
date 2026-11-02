@@ -1,0 +1,56 @@
+@startuml
+!include common.iuml
+skinparam linetype ortho
+skinparam componentStyle uml2
+skinparam nodesep 18
+skinparam ranksep 35
+package "Presentation layer (console menus, one per role)" as P {
+  [LoginMenu]
+  [StudentMenu]
+  [LecturerMenu]
+  [HodMenu]
+  [AdminMenu]
+}
+package "Business logic layer" as B {
+  [AuthService]
+  [SubmissionService]
+  [AssignmentService]
+  [MarkingService]
+  [ModerationService]
+  [AdminService]
+  [BackupService]
+  [PenaltyPolicy]
+  [AuditService]
+}
+package "Data access layer" as D {
+  [Repository interfaces] <<interface>> as IRepo
+  [SQLite repositories] as Repo
+  [Database] as DB
+}
+database "lms.db\n(SQLite)" as File
+folder "Submission\nfile store" as Store
+[libsodium] as Sod
+
+[LoginMenu] --> [AuthService]
+[StudentMenu] --> [SubmissionService]
+[LecturerMenu] --> [AssignmentService]
+[LecturerMenu] --> [MarkingService]
+[HodMenu] --> [ModerationService]
+[AdminMenu] --> [AdminService]
+[AdminMenu] --> [BackupService]
+[SubmissionService] --> [PenaltyPolicy]
+[AssignmentService] --> [PenaltyPolicy]
+[MarkingService] --> [PenaltyPolicy]
+[MarkingService] --> [AuditService]
+[ModerationService] --> [AuditService]
+[HodMenu] --> [AuditService]
+[AdminMenu] --> [AuditService]
+[PenaltyPolicy] -[hidden]-> IRepo
+B ..> IRepo : every service uses
+Repo -u-|> IRepo
+Repo -r-> DB
+[BackupService] ..> DB : copies file
+DB --> File
+[AuthService] --> Sod
+[SubmissionService] --> Store
+@enduml

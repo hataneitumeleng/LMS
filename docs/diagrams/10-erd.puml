@@ -1,0 +1,103 @@
+@startuml
+!include common.iuml
+skinparam linetype polyline
+hide circle
+skinparam nodesep 70
+skinparam ranksep 70
+entity department {
+  * id : INTEGER <<PK>>
+  --
+  * name : TEXT <<UQ>>
+}
+entity user {
+  * id : INTEGER <<PK>>
+  --
+  * username : TEXT <<UQ>>
+  * password_hash : TEXT
+  * full_name : TEXT
+  * role : TEXT <<CHECK>>
+  department_id : INTEGER <<FK>>
+  * active : INTEGER
+  * failed_attempts : INTEGER
+  locked_until : TEXT
+}
+entity course {
+  * id : INTEGER <<PK>>
+  --
+  * code : TEXT <<UQ>>
+  * title : TEXT
+  * department_id : INTEGER <<FK>>
+}
+entity course_lecturer {
+  * course_id : INTEGER <<PK, FK>>
+  * lecturer_id : INTEGER <<PK, FK>>
+}
+entity enrolment {
+  * course_id : INTEGER <<PK, FK>>
+  * student_id : INTEGER <<PK, FK>>
+}
+entity assignment {
+  * id : INTEGER <<PK>>
+  --
+  * course_id : INTEGER <<FK>>
+  * title : TEXT
+  description : TEXT
+  * deadline : TEXT
+  * max_mark : INTEGER <<CHECK>>
+  * created_by : INTEGER <<FK>>
+}
+entity extension {
+  * assignment_id : INTEGER <<PK, FK>>
+  * student_id : INTEGER <<PK, FK>>
+  --
+  * new_deadline : TEXT
+  * reason : TEXT
+  * granted_by : INTEGER <<FK>>
+  * granted_at : TEXT
+}
+entity submission {
+  * id : INTEGER <<PK>>
+  --
+  * assignment_id : INTEGER <<FK>>
+  * student_id : INTEGER <<FK>>
+  * status : TEXT <<CHECK>>
+  * days_late : INTEGER
+  raw_mark : REAL
+  final_mark : REAL
+  feedback : TEXT
+  marked_by : INTEGER <<FK>>
+  moderated_by : INTEGER <<FK>>
+  moderated_at : TEXT
+}
+entity submission_version {
+  * submission_id : INTEGER <<PK, FK>>
+  * version_no : INTEGER <<PK>>
+  --
+  * file_path : TEXT
+  * submitted_at : TEXT
+}
+entity audit_entry {
+  * id : INTEGER <<PK>>
+  --
+  * submission_id : INTEGER <<FK>>
+  * user_id : INTEGER <<FK>>
+  * changed_at : TEXT
+  old_value : REAL
+  * new_value : REAL
+  * reason : TEXT
+}
+department ||--o{ course
+department |o--o| user : "HoD (max. 1 active)"
+course ||--o{ course_lecturer
+user ||--o{ course_lecturer
+course ||--o{ enrolment
+user ||--o{ enrolment
+course ||--o{ assignment
+assignment ||--o{ extension
+user ||--o{ extension
+assignment ||--o{ submission
+user ||--o{ submission
+submission ||--|{ submission_version
+submission ||--o{ audit_entry
+user ||--o{ audit_entry
+@enduml

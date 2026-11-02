@@ -1,0 +1,49 @@
+@startuml
+!include common.iuml
+skinparam defaultFontSize 12
+skinparam ActivityFontSize 12
+|Student|
+start
+:Choose assignment,\n"Submit work";
+|System|
+if (Earlier submission and\n(deadline passed\nor Marked)?) then (yes)
+  :Refuse
+  (BR-06);
+  stop
+else (no)
+endif
+|Student|
+repeat :Enter file path;
+|System|
+repeat while (File exists\nand <= 10 MB?) is (no: show reason)
+->yes;
+|Student|
+if (Confirm?) then (yes)
+else (no)
+  :Cancel,
+  nothing saved;
+  stop
+endif
+|System|
+:Record time, get
+effective deadline
+(extension if any);
+if (Time <= effective\ndeadline?) then (yes)
+  :Submitted,
+  daysLate = 0;
+else (no)
+  :Late, daysLate =
+  started 24 h
+  periods (BR-02);
+endif
+if (Rows saved and\nfile copied?) then (yes)
+  :Show confirmation;
+:Submission waits\nfor marking (Figure 5b);
+else (no)
+  :Roll back, delete
+  copied file,
+  show error (NFR-07);
+  stop
+endif
+stop
+@enduml

@@ -1,0 +1,6 @@
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam dpi 200
+skinparam classAttributeIconSize 0

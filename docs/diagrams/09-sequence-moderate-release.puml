@@ -1,0 +1,70 @@
+@startuml
+!include common.iuml
+skinparam defaultFontSize 11
+skinparam sequenceMessageAlign left
+hide footbox
+actor HoD
+participant ":HodMenu" as M
+participant ":ModerationService" as S
+participant ":ISubmissionRepository" as R
+participant ":AuditService" as AU
+participant ":IAuditRepository" as AR
+participant ":Database" as D
+
+HoD -> M : "Moderate marks", select assignment
+M -> S : listForModeration(hodId, assignmentId)
+activate S
+S -> S : check assignment is in HoD's department (FR-02)
+S -> R : findByAssignment(assignmentId)
+R --> S : submissions
+S --> M : Marked submissions
+deactivate S
+M --> HoD : list (raw, days late, penalty, final, feedback)
+alt adjust one mark
+  HoD -> M : new final mark and reason
+  M -> S : adjust(hodId, subId, finalMark, reason)
+  activate S
+  S -> S : validate 0 <= mark <= max, reason not empty
+  S -> D : begin()
+  S -> R : save(submission.moderate(finalMark))
+  S -> AU : record(hodId, subId, old, new, reason)
+  AU -> AR : add(entry)
+  alt both writes succeed
+    S -> D : commit()
+  else any error
+    S -> D : rollback()
+    note right of S : neither the mark nor the\naudit entry is saved (NFR-08)
+  end
+  deactivate S
+else approve all (no mark changes, so no audit entry)
+  HoD -> M : "Approve all", confirm
+  M -> S : approveAll(hodId, assignmentId)
+  activate S
+  S -> D : begin()
+  loop each Marked submission
+    S -> R : save(submission.moderate(currentFinal))
+  end
+  S -> D : commit()
+  note right of S : on error: rollback(), no\nsubmission changes status
+  deactivate S
+end
+HoD -> M : "Release marks", confirm
+M -> S : release(hodId, assignmentId)
+activate S
+S -> D : begin()
+S -> R : countNotModerated(assignmentId)
+R --> S : n (Submitted, Late or Marked)
+alt n == 0
+  loop each Moderated submission
+    S -> R : save(submission.release())
+  end
+  S -> D : commit()
+  S --> M : released
+  M --> HoD : "Marks released"
+else n > 0
+  S -> D : rollback()
+  S --> M : throw NotReadyForRelease(n)
+  M --> HoD : "n submissions still need marking or moderation" (FR-15)
+end
+deactivate S
+@enduml

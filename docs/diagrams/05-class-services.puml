@@ -1,0 +1,175 @@
+@startuml
+!include common.iuml
+skinparam linetype polyline
+skinparam nodesep 12
+skinparam ranksep 55
+hide empty members
+left to right direction
+interface IPenaltyPolicy <<interface>> {
+  + daysLate(submittedAt, deadline) : int
+  + finalMark(raw : double, max : int, daysLate : int) : double
+}
+class TenPercentPerDayPolicy {
+  - ratePerDay : double = 0.10
+  - maxDays : int = 3
+}
+interface IClock <<interface>> {
+  + now() : time_point
+}
+class SystemClock
+interface IPasswordHasher <<interface>> {
+  + hash(pw : string) : string
+  + verify(pw : string, hash : string) : bool
+}
+class Argon2Hasher
+class UserFactory {
+  + create(role, username, fullName, deptId) : unique_ptr<User>
+}
+class AuthService {
+  - users : IUserRepository&
+  - hasher : IPasswordHasher&
+  - clock : IClock&
+  + login(username, password) : unique_ptr<User>
+  + changePassword(userId, oldPw, newPw) : void
+}
+class AdminService {
+  - users : IUserRepository&
+  - courses : ICourseRepository&
+  - factory : UserFactory&
+  + createUser(role, username, fullName, pw) : int
+  + createDepartment(name, hodUserId) : int
+  + replaceHod(deptId, newHodUserId) : void
+  + deactivateUser(userId) : void
+  + createCourse(code, title, deptId) : int
+  + assignLecturer(courseId, lecturerId) : void
+  + enrol(courseId, studentId) : void
+}
+class SubmissionService {
+  - subs : ISubmissionRepository&
+  - assignments : IAssignmentRepository&
+  - policy : IPenaltyPolicy&
+  - clock : IClock&
+  - store : FileStore&
+  + submit(studentId, assignmentId, path) : Submission
+  + listForStudent(studentId) : vector<AssignmentView>
+  + releasedResults(studentId) : vector<Submission>
+}
+class MarkingService {
+  - subs : ISubmissionRepository&
+  - policy : IPenaltyPolicy&
+  - audit : AuditService&
+  + mark(lecturerId, subId, raw, feedback) : void
+  + amend(lecturerId, subId, raw, feedback, reason) : void
+}
+class ModerationService {
+  - subs : ISubmissionRepository&
+  - audit : AuditService&
+  + listForModeration(hodId, assignmentId) : vector<Submission>
+  + approveAll(hodId, assignmentId) : void
+  + adjust(hodId, subId, finalMark, reason) : void
+  + release(hodId, assignmentId) : void
+}
+class AssignmentService {
+  - assignments : IAssignmentRepository&
+  - subs : ISubmissionRepository&
+  - policy : IPenaltyPolicy&
+  + createAssignment(lecturerId, courseId, title, deadline, maxMark) : int
+  + grantExtension(lecturerId, assignmentId, studentId, newDeadline, reason) : void
+}
+class BackupService {
+  - db : Database&
+  + backup(path : string) : void
+}
+class AuditService {
+  - auditRepo : IAuditRepository&
+  + record(userId, subId, oldVal, newVal, reason) : void
+  + entriesFor(viewerId) : vector<AuditEntry>
+}
+interface IUserRepository <<interface>> {
+  + findByUsername(name) : unique_ptr<User>
+  + save(u : const User&) : int
+  + findActiveHod(deptId) : optional<User>
+}
+interface ISubmissionRepository <<interface>> {
+  + findCurrent(studentId, assignmentId) : optional<Submission>
+  + findByAssignment(assignmentId) : vector<Submission>
+  + save(s : const Submission&) : void
+  + addVersion(subId, v) : void
+  + countNotModerated(assignmentId) : int
+}
+interface IAssignmentRepository <<interface>> {
+  + find(id) : Assignment
+  + findExtension(assignmentId, studentId) : optional<Extension>
+  + save(a : const Assignment&) : int
+  + saveExtension(e : const Extension&) : void
+}
+interface IAuditRepository <<interface>> {
+  + add(e : const AuditEntry&) : void
+  + findByDepartment(deptId) : vector<AuditEntry>
+  + findAll() : vector<AuditEntry>
+}
+interface ICourseRepository <<interface>> {
+  + saveDepartment(d : const Department&) : int
+  + saveCourse(c : const Course&) : int
+  + addLecturer(courseId, lecturerId) : void
+  + addEnrolment(courseId, studentId) : void
+  + coursesForStudent(studentId) : vector<Course>
+}
+class SqliteCourseRepository
+class SqliteUserRepository
+class SqliteSubmissionRepository
+class SqliteAssignmentRepository
+class SqliteAuditRepository
+class Database {
+  - handle : sqlite3*
+  + begin() : void
+  + commit() : void
+  + rollback() : void
+  + prepare(sql : string) : Statement
+}
+class FileStore {
+  + validate(path) : void
+  + copyIn(path, subId, versionNo) : string
+  + remove(storedPath) : void
+  + removeOrphans(knownPaths) : void
+}
+
+IPenaltyPolicy <|.. TenPercentPerDayPolicy
+IClock <|.. SystemClock
+IPasswordHasher <|.. Argon2Hasher
+AuthService --> IUserRepository
+AuthService --> IPasswordHasher
+AuthService --> IClock
+AdminService --> IUserRepository
+AdminService --> UserFactory
+AdminService --> ICourseRepository
+SubmissionService --> ICourseRepository
+ICourseRepository <|.. SqliteCourseRepository
+SqliteCourseRepository --> Database
+SubmissionService --> ISubmissionRepository
+SubmissionService --> IAssignmentRepository
+SubmissionService --> IPenaltyPolicy
+SubmissionService --> IClock
+SubmissionService --> FileStore
+MarkingService --> ISubmissionRepository
+MarkingService --> IPenaltyPolicy
+MarkingService --> AuditService
+ModerationService --> ISubmissionRepository
+ModerationService --> AuditService
+AuditService --> IAuditRepository
+AssignmentService --> IAssignmentRepository
+AssignmentService --> ISubmissionRepository
+AssignmentService --> IPenaltyPolicy
+BackupService --> Database
+IUserRepository <|.. SqliteUserRepository
+ISubmissionRepository <|.. SqliteSubmissionRepository
+IAssignmentRepository <|.. SqliteAssignmentRepository
+IAuditRepository <|.. SqliteAuditRepository
+SqliteUserRepository --> Database
+SqliteSubmissionRepository --> Database
+SqliteAssignmentRepository --> Database
+SqliteAuditRepository --> Database
+
+class User <<abstract>>
+UserFactory ..> User : creates
+@enduml
