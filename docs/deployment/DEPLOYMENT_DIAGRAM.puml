@@ -1,0 +1,49 @@
+
+@startuml
+title Moderated Learning Management System (LMS)\nUML Deployment Diagram
+
+top to bottom direction
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName Arial
+skinparam linetype ortho
+
+node "School Computer\nWindows 10/11 or Ubuntu 22.04" as PC {
+
+  node "LMS Application Runtime" as Runtime {
+
+    artifact "lms_gui\nQt 6 Desktop GUI" as GUI
+    artifact "lms\nConsole Application" as CLI
+
+    component "lms_core\nShared Application Core" as Core
+
+    component "Business Services\nAuthentication\nAssignments\nSubmissions\nMarking\nModeration\nAdministration\nBackup" as Services
+
+    component "Data Access Layer\nSQLite Repositories\nFileStore" as DataAccess
+
+    GUI --> Core : uses
+    CLI --> Core : uses
+    Core --> Services
+    Services --> DataAccess
+  }
+
+  database "lms.db\nSQLite Database" as DB
+  folder "submissions/\nUploaded Student Files" as Files
+
+  DataAccess --> DB : read / write
+  DataAccess --> Files : store / retrieve
+}
+
+folder "Backup Destination\nlms.db + submissions/" as Backup
+
+Services --> Backup : backup / restore
+
+note bottom of PC
+  The database and submissions directory
+  are relative to the application's
+  working directory.
+
+  Normal operation is offline.
+end note
+
+@enduml

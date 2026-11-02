@@ -115,7 +115,9 @@ if(GTest_FOUND)
     )
     target_link_libraries(lms_tests PRIVATE lms_core GTest::gtest GTest::gtest_main)
     include(GoogleTest)
-    gtest_discover_tests(lms_tests)
+    gtest_discover_tests(lms_tests
+    DISCOVERY_TIMEOUT 60
+)
     message(STATUS "GoogleTest found: building lms_tests")
 else()
     message(STATUS "GoogleTest not found: lms_tests is skipped")
