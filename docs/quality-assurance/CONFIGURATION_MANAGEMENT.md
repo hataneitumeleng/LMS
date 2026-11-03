@@ -1,4 +1,4 @@
-# Phase 6 - Configuration Management Record
+﻿# Phase 6 - Configuration Management Record
 
 **Project:** Moderated Learning Management System (LMS)  
 **Course:** CS4433 Software Engineering  
@@ -38,7 +38,7 @@ Two existing Git tags were verified:
 | `phase4-submitted` | Identifies the Phase 4 submission state |
 | `gui-8d` | Identifies a GUI development milestone |
 
-A final release tag has not yet been created.
+Release tags were added later: v1.0 (Phase 7 release) and v1.1 (Phase 8, change request CR1).
 
 ## 4. Continuous Integration
 

@@ -105,3 +105,12 @@ Version 1.0 is prepared as the initial deployment release of the Moderated LMS.
 **Repository:** https://github.com/hataneitumeleng/LMS
 
 **Release tag:** `v1.0` (to be created after final verification).
+
+---
+
+## Version 1.1 (3 November 2026)
+
+- New: a lecturer can extend an assignment deadline for the whole class (change request CR1, FR-23).
+- Open submissions are recalculated; individual extensions and marked work are kept.
+- Four new service tests; 218/218 CTest tests passed.
+- Requirements traceability matrix and design diagrams updated.
