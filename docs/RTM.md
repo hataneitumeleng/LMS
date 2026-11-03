@@ -1,6 +1,6 @@
-# Requirements Traceability Matrix (Phase 5: tests completed)
+﻿# Requirements Traceability Matrix (updated for Phase 8, CR1)
 
-Each requirement is traced from its use case and design element (Week 3, Table 3) to its implementation and tests. Source paths are under `src/`; test identifiers are from `tests/`. Phase 5 evidence: 214/214 CTest tests passed and `src/services` line coverage was 580/594 (97.6%).
+Each requirement is traced from its use case and design element (Week 3, Table 3) to its implementation and tests. Source paths are under `src/`; test identifiers are from `tests/`. Phase 5 evidence: 214/214 CTest tests passed and `src/services` line coverage was 580/594 (97.6%). Phase 8 (CR1): 218/218 CTest tests passed; coverage was not measured again after CR1.
 
 ## Functional requirements
 
@@ -28,7 +28,7 @@ Each requirement is traced from its use case and design element (Week 3, Table 3
 | FR-20 | UC-16 | BackupService | `services/BackupService.cpp`, `ui/AdminMenu.cpp` (`backUp`) | `SqliteServiceTest.BackupCopiesTheDatabaseAndTheFiles`, `System.ST12_backup` |
 | FR-21 | UC-13 | Deferred from v1.0 | – | – |
 | FR-22 | UC-11 | Deferred from v1.0 | – | – |
-| FR-23 | – | Won't (CR1 in Phase 8) | – | – |
+| FR-23 | UC-07 | CR1 (Phase 8): class-wide deadline extension | `services/AssignmentService.cpp` (`extendClassDeadline`), `gui/LecturerWindow.cpp` | `AssignmentServiceTest.ClassWideExtensionUpdatesDeadline`, `AssignmentServiceTest.ClassWideExtensionPreservesIndividualExtension`, `SubmissionServiceTest.ClassWideExtensionRecalculatesLateSubmission`, `SubmissionServiceTest.ClassWideExtensionPreservesMarkedSubmission` |
 | FR-24 | UC-06, UC-09 | Added after Phase 4: assignment brief file | `services/AssignmentService.cpp` (`attachBrief`), `services/FileStore.cpp` (`copyBrief`), `services/SubmissionService.cpp` (`briefFor`, `removeOrphanFiles`), `data/Database.cpp` (`upgradeSchema`), `data/SqliteAssignmentRepository.cpp` (`brief_path`), `ui/LecturerMenu.cpp`, `ui/StudentMenu.cpp`, `gui/LecturerWindow.cpp`, `gui/StudentWindow.cpp` | `AssignmentServiceTest.AttachBriefCopiesTheFile`, `SubmissionServiceTest.EnrolledStudentGetsTheBrief`; `System.ST06_create_assignment` |
 
 ## Business rules
@@ -94,4 +94,4 @@ The automated console scenarios are `ST01`–`ST14`, described in `docs/SYSTEM_T
 | NFR-07 | ST14 |
 | NFR-09 | gcovr: 580/594 service lines (97.6%) |
 
-Deferred FR-21 and FR-22 and excluded FR-23 are not assigned v1.0 tests.
+Deferred FR-21 and FR-22 are not assigned v1.0 tests. FR-23 (CR1) is covered by the four service tests above.
